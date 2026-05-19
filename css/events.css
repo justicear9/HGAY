@@ -1,0 +1,229 @@
+/* Events calendar page */
+.ev-page {
+  padding: 7rem 1.25rem 4rem;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.ev-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.ev-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ghana-gold);
+  margin-bottom: 0.5rem;
+}
+
+.ev-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.ev-lead {
+  color: var(--text-secondary);
+  max-width: 36rem;
+  margin: 0 auto;
+  font-size: 1.05rem;
+}
+
+.ev-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.ev-tab {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.ev-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(252, 209, 22, 0.35);
+}
+
+.ev-tab.is-active {
+  background: var(--ghana-gold);
+  color: var(--ghana-black);
+  border-color: var(--ghana-gold);
+}
+
+.ev-status {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  min-height: 1.25rem;
+}
+
+.ev-month {
+  margin-bottom: 2.5rem;
+}
+
+.ev-month-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--ghana-gold);
+  display: inline-block;
+}
+
+.ev-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.ev-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.ev-card:hover {
+  border-color: rgba(252, 209, 22, 0.25);
+}
+
+.ev-card.is-past {
+  opacity: 0.72;
+}
+
+.ev-card-date {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.ev-date-badge {
+  flex-shrink: 0;
+  width: 3.25rem;
+  text-align: center;
+  background: linear-gradient(145deg, var(--ghana-red), #b8050f);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 0.45rem 0.35rem;
+  line-height: 1.1;
+}
+
+.ev-date-badge .day {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.ev-date-badge .month {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.ev-card-meta h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.25rem;
+}
+
+.ev-card-when {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.ev-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.ev-location svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--ghana-gold);
+}
+
+.ev-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.ev-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.ev-price {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ghana-gold);
+}
+
+.ev-register {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--ghana-gold);
+  color: var(--ghana-black);
+  text-decoration: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ev-register:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(252, 209, 22, 0.25);
+}
+
+.ev-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-card:hover,
+  .ev-register:hover {
+    transform: none;
+  }
+}

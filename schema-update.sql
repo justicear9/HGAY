@@ -26,3 +26,21 @@ CREATE TABLE IF NOT EXISTS fact_cards (
   INDEX idx_category (category),
   INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS events (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  location VARCHAR(500) NOT NULL,
+  event_date DATE NOT NULL,
+  event_time TIME DEFAULT NULL,
+  price_display VARCHAR(64) DEFAULT NULL,
+  registration_url VARCHAR(500) DEFAULT NULL,
+  registration_label VARCHAR(64) NOT NULL DEFAULT 'Register',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_event_date (event_date),
+  INDEX idx_active (is_active)
+) ENGINE=InnoDB;

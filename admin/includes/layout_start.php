@@ -26,6 +26,7 @@ $navMain = [
   ['page' => 'orders', 'href' => 'orders', 'label' => 'Orders', 'icon' => 'cart', 'badge' => $pendingOrders],
   ['page' => 'settings', 'href' => 'settings', 'label' => 'Settings', 'icon' => 'settings'],
   ['page' => 'fact-cards', 'href' => 'fact-cards', 'label' => 'Fact Check', 'icon' => 'book'],
+  ['page' => 'events', 'href' => 'events', 'label' => 'Events', 'icon' => 'calendar'],
   ['page' => 'card-references', 'href' => 'card-references', 'label' => 'References', 'icon' => 'tag'],
   ['page' => 'view-site', 'href' => site_url(), 'label' => 'View site', 'icon' => 'external', 'external' => true],
 ];
