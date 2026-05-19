@@ -1,0 +1,47 @@
+# Clean URLs: hide index.html and strip .html / .php from browser URLs.
+# If the site lives in a subfolder, set RewriteBase to match (e.g. /HGAY/).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /HGAY/
+
+  # Redirect visible extensions to canonical paths
+  RewriteCond %{THE_REQUEST} \s/+HGAY/index\.html[\s?] [NC]
+  RewriteRule ^index\.html$ /HGAY/ [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s/+HGAY/([^.?\s]+)\.html[\s?] [NC]
+  RewriteRule ^ /HGAY/%1 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s/+HGAY/(verify|create_order)\.php[\s?] [NC]
+  RewriteRule ^ /HGAY/%1 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s/+HGAY/admin/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule ^ /HGAY/admin/%1 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s/+HGAY/api/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule ^ /HGAY/api/%1 [R=301,L]
+
+  # Serve existing files (css, js, images, etc.) as-is
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Internal rewrites to real files
+  RewriteRule ^$ index.html [L]
+  RewriteRule ^gallery/?$ gallery.html [L]
+  RewriteRule ^fact-check/?$ fact-check.html [L]
+  RewriteRule ^verify/?$ verify.php [L,QSA]
+  RewriteRule ^create_order/?$ create_order.php [L]
+
+  RewriteRule ^api/([a-z0-9_-]+)/?$ api/$1.php [L,QSA]
+
+  RewriteRule ^admin/?$ admin/index.php [L]
+  RewriteRule ^admin/login/?$ admin/login.php [L]
+  RewriteRule ^admin/setup/?$ admin/setup.php [L]
+  RewriteRule ^admin/logout/?$ admin/logout.php [L]
+  RewriteRule ^admin/seed_fact_cards/?$ admin/seed_fact_cards.php [L,QSA]
+  RewriteRule ^admin/([a-z0-9_-]+)/?$ admin/$1.php [L,QSA]
+</IfModule>
+
+DirectoryIndex index.html

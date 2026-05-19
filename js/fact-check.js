@@ -207,7 +207,7 @@
     if (referencesEl) referencesEl.hidden = true;
 
     try {
-      const res = await fetch('api/fact_check_list.php');
+      const res = await fetch('api/fact_check_list');
       const data = await res.json();
       if (res.ok && (data.facts?.length || data.references?.length)) {
         factCards = (data.facts || []).map(normalizeFact);

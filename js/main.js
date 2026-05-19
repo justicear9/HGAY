@@ -126,7 +126,7 @@ function initPreorderForm() {
   let amountPerGame = parseFloat(form.getAttribute('data-amount-ghs')) || 100;
   const pricePerEl = document.querySelector('.preorder-price-per');
 
-  fetch('api/get_settings.php')
+  fetch('api/get_settings')
     .then((r) => r.json())
     .then((s) => {
       if (s.price_ghs) {
@@ -208,7 +208,7 @@ function initPreorderForm() {
       regionListEl.innerHTML = '';
       regionListEl.hidden = true;
       if (phoneCountry) {
-        fetch('api/get_regions.php?country=' + encodeURIComponent(phoneCountry))
+        fetch('api/get_regions?country=' + encodeURIComponent(phoneCountry))
           .then((r) => r.json())
           .then((list) => {
             regionOptions = Array.isArray(list) ? list : [];
@@ -258,7 +258,7 @@ function initPreorderForm() {
     regionListEl.addEventListener('mousedown', (e) => e.preventDefault());
   }
 
-  fetch('api/get_countries.php')
+  fetch('api/get_countries')
     .then((r) => r.json())
     .then((data) => {
       const phoneSelect = document.getElementById('phone_country');
@@ -321,7 +321,7 @@ function initPreorderForm() {
     const formData = new FormData(form);
     formData.append('quantity', form.quantity.value);
 
-    fetch('create_order.php', {
+    fetch('create_order', {
       method: 'POST',
       body: formData,
       credentials: 'same-origin',
@@ -348,7 +348,7 @@ function initPreorderForm() {
             ],
           },
           callback: function (response) {
-            window.location.href = 'verify.php?reference=' + encodeURIComponent(response.reference);
+            window.location.href = 'verify?reference=' + encodeURIComponent(response.reference);
           },
           onClose: function () {
             btn.textContent = originalText;

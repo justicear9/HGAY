@@ -14,6 +14,8 @@ $amount = 0;
 $currency = 'GHS';
 $amountFormatted = '0.00 GHS';
 
+require_once __DIR__ . '/lib/paths.php';
+
 try {
   require_once __DIR__ . '/paystack_config.php';
   require_once __DIR__ . '/config/database.php';
@@ -120,11 +122,11 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
         <h1 class="section-title">Thank you!</h1>
         <p>Your order payment of <strong><?php echo htmlspecialchars($amountFormatted); ?></strong> was successful. We'll be in touch with delivery details.</p>
         <p><small>Reference: <?php echo htmlspecialchars($reference); ?></small></p>
-        <a href="index.html" class="btn btn-primary">Back to home</a>
+        <a href="<?php echo htmlspecialchars(site_url()); ?>" class="btn btn-primary">Back to home</a>
       <?php else: ?>
         <h1 class="section-title">Verification failed</h1>
         <p><?php echo htmlspecialchars($error); ?></p>
-        <a href="index.html#place-order" class="btn btn-primary">Try again</a>
+        <a href="<?php echo htmlspecialchars(site_url('#place-order')); ?>" class="btn btn-primary">Try again</a>
       <?php endif; ?>
     </div>
   </main>

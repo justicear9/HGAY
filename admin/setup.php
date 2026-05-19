@@ -5,12 +5,13 @@
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
 require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/lib/paths.php';
 
 $pdo = dbConnection();
 $stmt = $pdo->query('SELECT COUNT(*) FROM admin_users');
 $count = (int) $stmt->fetchColumn();
 if ($count > 0) {
-  header('Location: login.php');
+  header('Location: ' . admin_url('login'));
   exit;
 }
 
@@ -28,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username, $hash]);
     $_SESSION['admin_user_id'] = (int) $pdo->lastInsertId();
     $_SESSION['admin_username'] = $username;
-    header('Location: dashboard.php');
+    header('Location: ' . admin_url('dashboard'));
     exit;
   }
 }
@@ -82,7 +83,7 @@ $logoSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
         </form>
 
         <footer class="admin-auth-footer">
-          <a href="../index.html">← Back to website</a>
+          <a href="<?php echo htmlspecialchars(site_url()); ?>">← Back to website</a>
         </footer>
       </article>
     </div>

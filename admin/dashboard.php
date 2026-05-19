@@ -31,7 +31,7 @@ require_once 'includes/layout_start.php';
           <h1 class="dash-title">Dashboard</h1>
           <p class="dash-subtitle">Welcome back — here’s what’s happening with your store.</p>
         </div>
-        <a href="orders.php" class="btn btn-primary dash-header-btn">View all orders</a>
+        <a href="orders" class="btn btn-primary dash-header-btn">View all orders</a>
       </header>
 
       <div class="dash-stats">
@@ -75,7 +75,7 @@ require_once 'includes/layout_start.php';
         <section class="dash-panel dash-panel--wide">
           <div class="dash-panel-head">
             <h2 class="dash-panel-title">Recent orders</h2>
-            <a href="orders.php" class="dash-panel-link">View all</a>
+            <a href="orders" class="dash-panel-link">View all</a>
           </div>
           <ul class="dash-activity">
             <?php foreach ($recent as $o): ?>
@@ -103,11 +103,11 @@ require_once 'includes/layout_start.php';
         <aside class="dash-panel">
           <h2 class="dash-panel-title">Quick links</h2>
           <ul class="dash-quick-links">
-            <li><a href="settings.php"><?php echo admin_icon('settings'); ?> Product price &amp; setup</a></li>
-            <li><a href="fact-cards.php"><?php echo admin_icon('book'); ?> Manage Fact Check</a></li>
-            <li><a href="card-references.php"><?php echo admin_icon('tag'); ?> Card references</a></li>
-            <li><a href="../fact-check.html" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview Fact Check</a></li>
-            <li><a href="../index.html#place-order" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview order page</a></li>
+            <li><a href="settings"><?php echo admin_icon('settings'); ?> Product price &amp; setup</a></li>
+            <li><a href="fact-cards"><?php echo admin_icon('book'); ?> Manage Fact Check</a></li>
+            <li><a href="card-references"><?php echo admin_icon('tag'); ?> Card references</a></li>
+            <li><a href="<?php echo htmlspecialchars(site_url('fact-check')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview Fact Check</a></li>
+            <li><a href="<?php echo htmlspecialchars(site_url('#place-order')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview order page</a></li>
           </ul>
 
           <div class="dash-mini-stats">

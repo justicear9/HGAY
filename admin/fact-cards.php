@@ -66,7 +66,7 @@ require_once 'includes/layout_start.php';
 ?>
       <header class="admin-header">
         <h1>Fact Check cards</h1>
-        <p>Fact Check questions and answers — visitors tap to flip and reveal. For game-card terms like MENTAL or DUMSOR, use <a href="card-references.php">Card references</a>. (<a href="../fact-check.html" target="_blank">view page</a>)</p>
+        <p>Fact Check questions and answers — visitors tap to flip and reveal. For game-card terms like MENTAL or DUMSOR, use <a href="card-references">Card references</a>. (<a href="<?php echo htmlspecialchars(site_url('fact-check')); ?>" target="_blank">view page</a>)</p>
       </header>
 
       <?php if ($message): ?><div class="admin-alert success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
@@ -102,7 +102,7 @@ require_once 'includes/layout_start.php';
             <label><input type="checkbox" name="is_active" value="1"<?php echo (!$editCard || $editCard['is_active']) ? ' checked' : ''; ?>> Active on Fact Check page</label>
           </div>
           <button type="submit" class="btn btn-primary"><?php echo $editCard ? 'Update' : 'Add'; ?> card</button>
-          <?php if ($editCard): ?><a href="fact-cards.php" class="btn btn-secondary" style="margin-left:8px">Cancel</a><?php endif; ?>
+          <?php if ($editCard): ?><a href="fact-cards" class="btn btn-secondary" style="margin-left:8px">Cancel</a><?php endif; ?>
         </form>
       </div>
 
@@ -117,8 +117,8 @@ require_once 'includes/layout_start.php';
               <?php endforeach; ?>
             </select>
           </form>
-          <a href="seed_fact_cards.php" class="btn btn-secondary" onclick="return confirm('Import official cards from guide? Use force only if re-seeding.');">Seed from guide</a>
-          <a href="seed_fact_cards.php?force=1" class="btn btn-secondary" onclick="return confirm('Delete ALL cards and re-seed?');">Re-seed (force)</a>
+          <a href="seed_fact_cards" class="btn btn-secondary" onclick="return confirm('Import official cards from guide? Use force only if re-seeding.');">Seed from guide</a>
+          <a href="seed_fact_cards?force=1" class="btn btn-secondary" onclick="return confirm('Delete ALL cards and re-seed?');">Re-seed (force)</a>
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -132,7 +132,7 @@ require_once 'includes/layout_start.php';
                 <td style="max-width:320px"><?php echo htmlspecialchars(mb_substr($c['question'], 0, 80)); ?><?php echo mb_strlen($c['question']) > 80 ? '…' : ''; ?></td>
                 <td><?php echo $c['is_active'] ? 'Yes' : 'No'; ?></td>
                 <td class="admin-actions">
-                  <a href="fact-cards.php?edit=<?php echo (int) $c['id']; ?>" class="admin-btn-sm secondary">Edit</a>
+                  <a href="fact-cards?edit=<?php echo (int) $c['id']; ?>" class="admin-btn-sm secondary">Edit</a>
                   <form method="post" style="display:inline" onsubmit="return confirm('Delete this card?');">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?php echo (int) $c['id']; ?>">
@@ -142,7 +142,7 @@ require_once 'includes/layout_start.php';
               </tr>
               <?php endforeach; ?>
               <?php if (empty($cards)): ?>
-              <tr><td colspan="4">No cards. <a href="seed_fact_cards.php">Seed from official guide</a>.</td></tr>
+              <tr><td colspan="4">No cards. <a href="seed_fact_cards">Seed from official guide</a>.</td></tr>
               <?php endif; ?>
             </tbody>
           </table>

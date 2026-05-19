@@ -46,6 +46,6 @@ require_once 'includes/layout_start.php';
       <div class="admin-card">
         <h2>Database setup</h2>
         <p class="hint" style="margin-bottom:1rem">If you have not run the latest schema, import <code>schema-update.sql</code> in phpMyAdmin, then seed Fact Check cards.</p>
-        <a href="seed_fact_cards.php" class="btn btn-secondary">Seed Fact Check cards</a>
+        <a href="seed_fact_cards" class="btn btn-secondary">Seed Fact Check cards</a>
       </div>
 <?php require_once 'includes/layout_end.php'; ?>

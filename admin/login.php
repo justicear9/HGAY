@@ -5,16 +5,17 @@
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
 require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/lib/paths.php';
 
 if (!empty($_SESSION['admin_user_id'])) {
-  header('Location: dashboard.php');
+  header('Location: ' . admin_url('dashboard'));
   exit;
 }
 
 try {
   $stmt = dbConnection()->query('SELECT COUNT(*) FROM admin_users');
   if ((int) $stmt->fetchColumn() === 0) {
-    header('Location: setup.php');
+    header('Location: ' . admin_url('setup'));
     exit;
   }
 } catch (PDOException $e) {
@@ -34,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password_hash'])) {
       $_SESSION['admin_user_id'] = (int) $user['id'];
       $_SESSION['admin_username'] = $username;
-      header('Location: dashboard.php');
+      header('Location: ' . admin_url('dashboard'));
       exit;
     }
     $error = 'Invalid username or password.';
@@ -90,7 +91,7 @@ $logoSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
         </form>
 
         <footer class="admin-auth-footer">
-          <a href="../index.html">← Back to website</a>
+          <a href="<?php echo htmlspecialchars(site_url()); ?>">← Back to website</a>
         </footer>
       </article>
     </div>

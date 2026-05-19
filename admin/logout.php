@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/lib/paths.php';
 session_start();
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {
@@ -6,5 +7,5 @@ if (ini_get('session.use_cookies')) {
   setcookie(session_name(), '', time() - 3600, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
 }
 session_destroy();
-header('Location: login.php');
+header('Location: ' . admin_url('login'));
 exit;

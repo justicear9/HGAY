@@ -18,19 +18,20 @@ try {
 } catch (Throwable $e) {
 }
 
+require_once dirname(__DIR__) . '/../lib/paths.php';
 require_once __DIR__ . '/icons.php';
 
 $navMain = [
-  ['page' => 'dashboard', 'href' => 'dashboard.php', 'label' => 'Dashboard', 'icon' => 'home'],
-  ['page' => 'orders', 'href' => 'orders.php', 'label' => 'Orders', 'icon' => 'cart', 'badge' => $pendingOrders],
-  ['page' => 'settings', 'href' => 'settings.php', 'label' => 'Settings', 'icon' => 'settings'],
-  ['page' => 'fact-cards', 'href' => 'fact-cards.php', 'label' => 'Fact Check', 'icon' => 'book'],
-  ['page' => 'card-references', 'href' => 'card-references.php', 'label' => 'References', 'icon' => 'tag'],
-  ['page' => 'view-site', 'href' => '../index.html', 'label' => 'View site', 'icon' => 'external', 'external' => true],
+  ['page' => 'dashboard', 'href' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'home'],
+  ['page' => 'orders', 'href' => 'orders', 'label' => 'Orders', 'icon' => 'cart', 'badge' => $pendingOrders],
+  ['page' => 'settings', 'href' => 'settings', 'label' => 'Settings', 'icon' => 'settings'],
+  ['page' => 'fact-cards', 'href' => 'fact-cards', 'label' => 'Fact Check', 'icon' => 'book'],
+  ['page' => 'card-references', 'href' => 'card-references', 'label' => 'References', 'icon' => 'tag'],
+  ['page' => 'view-site', 'href' => site_url(), 'label' => 'View site', 'icon' => 'external', 'external' => true],
 ];
 
 $navAccount = [
-  ['href' => 'logout.php', 'label' => 'Log out', 'icon' => 'logout'],
+  ['href' => 'logout', 'label' => 'Log out', 'icon' => 'logout'],
 ];
 ?>
 <!DOCTYPE html>
@@ -51,7 +52,7 @@ $navAccount = [
   <div class="admin-app" id="admin-app">
     <aside class="admin-sidebar" id="admin-sidebar" aria-label="Admin navigation">
       <div class="admin-sidebar-brand">
-        <a href="dashboard.php" class="admin-sidebar-brand-link">
+        <a href="dashboard" class="admin-sidebar-brand-link">
           <img src="<?php echo htmlspecialchars($logoSrc); ?>" alt="" class="admin-sidebar-logo" width="40" height="40">
           <span class="admin-sidebar-brand-text">
             <span class="admin-sidebar-brand-name">How Ghanaian Are You</span>

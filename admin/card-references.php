@@ -54,7 +54,7 @@ require_once 'includes/layout_start.php';
 ?>
       <header class="admin-header">
         <h1>Card references</h1>
-        <p>Glossary terms used on game cards (e.g. MENTAL, DUMSOR). Shown at the bottom of the <a href="../fact-check.html" target="_blank">Fact Check page</a> — not part of the Q&amp;A flip cards.</p>
+        <p>Glossary terms used on game cards (e.g. MENTAL, DUMSOR). Shown at the bottom of the <a href="<?php echo htmlspecialchars(site_url('fact-check')); ?>" target="_blank">Fact Check page</a> — not part of the Q&amp;A flip cards.</p>
       </header>
 
       <?php if ($message): ?><div class="admin-alert success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
@@ -81,7 +81,7 @@ require_once 'includes/layout_start.php';
             <label><input type="checkbox" name="is_active" value="1"<?php echo (!$editRow || $editRow['is_active']) ? ' checked' : ''; ?>> Show on Fact Check page</label>
           </div>
           <button type="submit" class="btn btn-primary"><?php echo $editRow ? 'Update' : 'Add'; ?> reference</button>
-          <?php if ($editRow): ?><a href="card-references.php" class="btn btn-secondary" style="margin-left:8px">Cancel</a><?php endif; ?>
+          <?php if ($editRow): ?><a href="card-references" class="btn btn-secondary" style="margin-left:8px">Cancel</a><?php endif; ?>
         </form>
       </div>
 
@@ -98,7 +98,7 @@ require_once 'includes/layout_start.php';
                 <td style="max-width:360px"><?php echo htmlspecialchars(mb_substr($r['answer'], 0, 100)); ?><?php echo mb_strlen($r['answer']) > 100 ? '…' : ''; ?></td>
                 <td><?php echo $r['is_active'] ? 'Yes' : 'No'; ?></td>
                 <td class="admin-actions">
-                  <a href="card-references.php?edit=<?php echo (int) $r['id']; ?>" class="admin-btn-sm secondary">Edit</a>
+                  <a href="card-references?edit=<?php echo (int) $r['id']; ?>" class="admin-btn-sm secondary">Edit</a>
                   <form method="post" style="display:inline" onsubmit="return confirm('Delete this reference?');">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?php echo (int) $r['id']; ?>">
@@ -108,7 +108,7 @@ require_once 'includes/layout_start.php';
               </tr>
               <?php endforeach; ?>
               <?php if (empty($rows)): ?>
-              <tr><td colspan="4">No references. <a href="seed_fact_cards.php">Seed from official guide</a> includes reference terms.</td></tr>
+              <tr><td colspan="4">No references. <a href="seed_fact_cards">Seed from official guide</a> includes reference terms.</td></tr>
               <?php endif; ?>
             </tbody>
           </table>
