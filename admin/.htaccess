@@ -1,0 +1,2 @@
+# Route /admin/ to index.php (login redirect or dashboard)
+DirectoryIndex index.php

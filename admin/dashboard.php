@@ -2,30 +2,43 @@
 require_once 'auth.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/settings.php';
-$pdo = dbConnection();
-$priceGhs = getProductPriceGhs($pdo);
 
-$stats = [
-  'total' => (int) $pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn(),
-  'paid' => (int) $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'paid'")->fetchColumn(),
-  'pending' => (int) $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn(),
-  'revenue' => (int) $pdo->query("SELECT COALESCE(SUM(amount_pesewas), 0) FROM orders WHERE status = 'paid'")->fetchColumn(),
-];
+$priceGhs = 100;
+$stats = ['total' => 0, 'paid' => 0, 'pending' => 0, 'revenue' => 0];
 $cardsCount = 0;
-try {
-  $cardsCount = (int) $pdo->query("SELECT COUNT(*) FROM fact_cards WHERE is_active = 1 AND category != 'card_references'")->fetchColumn();
-} catch (PDOException $e) {
-}
+$recent = [];
+$dbError = '';
 
-$recent = $pdo->query("
-  SELECT id, name, email, quantity, amount_pesewas, currency, status, created_at
-  FROM orders ORDER BY created_at DESC LIMIT 6
-")->fetchAll();
+try {
+  $pdo = dbConnection();
+  $priceGhs = getProductPriceGhs($pdo);
+  $stats = [
+    'total' => (int) $pdo->query('SELECT COUNT(*) FROM orders')->fetchColumn(),
+    'paid' => (int) $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'paid'")->fetchColumn(),
+    'pending' => (int) $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn(),
+    'revenue' => (int) $pdo->query("SELECT COALESCE(SUM(amount_pesewas), 0) FROM orders WHERE status = 'paid'")->fetchColumn(),
+  ];
+  try {
+    $cardsCount = (int) $pdo->query("SELECT COUNT(*) FROM fact_cards WHERE is_active = 1 AND category != 'card_references'")->fetchColumn();
+  } catch (PDOException $e) {
+    // fact_cards table or is_active column may be missing on older DBs
+  }
+  $recent = $pdo->query("
+    SELECT id, name, email, quantity, amount_pesewas, currency, status, created_at
+    FROM orders ORDER BY created_at DESC LIMIT 6
+  ")->fetchAll();
+} catch (Throwable $e) {
+  error_log('admin/dashboard.php: ' . $e->getMessage());
+  $dbError = 'Database error. Check config/database.php and run schema.sql / schema-update.sql on the server.';
+}
 
 $adminTitle = 'Dashboard';
 $adminPage = 'dashboard';
 require_once 'includes/layout_start.php';
 ?>
+      <?php if ($dbError): ?>
+      <div class="admin-auth-alert" role="alert" style="margin-bottom:1.5rem"><?php echo htmlspecialchars($dbError); ?></div>
+      <?php endif; ?>
       <header class="dash-header">
         <div>
           <h1 class="dash-title">Dashboard</h1>

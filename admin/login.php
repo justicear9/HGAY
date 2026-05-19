@@ -2,20 +2,21 @@
 /**
  * Admin login. Redirects to dashboard if already logged in.
  */
-session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
-session_start();
+require_once dirname(__DIR__) . '/lib/session.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/paths.php';
 
+hgay_session_start();
+
 if (!empty($_SESSION['admin_user_id'])) {
-  header('Location: ' . admin_url('dashboard'));
+  header('Location: ' . admin_url('dashboard'), true, 302);
   exit;
 }
 
 try {
   $stmt = dbConnection()->query('SELECT COUNT(*) FROM admin_users');
   if ((int) $stmt->fetchColumn() === 0) {
-    header('Location: ' . admin_url('setup'));
+    header('Location: ' . admin_url('setup'), true, 302);
     exit;
   }
 } catch (PDOException $e) {
@@ -35,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password_hash'])) {
       $_SESSION['admin_user_id'] = (int) $user['id'];
       $_SESSION['admin_username'] = $username;
-      header('Location: ' . admin_url('dashboard'));
+      header('Location: ' . admin_url('dashboard'), true, 302);
       exit;
     }
     $error = 'Invalid username or password.';

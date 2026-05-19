@@ -3,35 +3,11 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Avoid Apache "negotiating" gallery / fact-check as directories
   <IfModule mod_negotiation.c>
     Options -MultiViews
   </IfModule>
 
-  # Redirect visible extensions to canonical paths (path-aware)
-  RewriteCond %{THE_REQUEST} \s\S+\s+(\S*?)index\.html[\s?] [NC]
-  RewriteRule ^index\.html$ %1 [R=301,L]
-
-  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)\.html[\s?] [NC]
-  RewriteRule \.html$ %1 [R=301,L]
-
-  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/(verify|create_order)\.php[\s?] [NC]
-  RewriteRule ^(verify|create_order)\.php$ %1/%2 [R=301,L]
-
-  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/admin/([^.?\s]+)\.php[\s?] [NC]
-  RewriteRule \.php$ %1/admin/%2 [R=301,L]
-
-  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/api/([^.?\s]+)\.php[\s?] [NC]
-  RewriteRule \.php$ %1/api/%2 [R=301,L]
-
-  # Serve existing files (css, js, images, etc.) as-is
-  RewriteCond %{REQUEST_FILENAME} -f
-  RewriteRule ^ - [L]
-
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # Internal rewrites to real files
+  # --- Clean URL routing (before -f/-d so /admin is not blocked by admin/ folder) ---
   RewriteRule ^$ index.html [L]
   RewriteRule ^gallery/?$ gallery.html [L]
   RewriteRule ^fact-check/?$ fact-check.html [L]
@@ -46,6 +22,29 @@
   RewriteRule ^admin/logout/?$ admin/logout.php [L]
   RewriteRule ^admin/seed_fact_cards/?$ admin/seed_fact_cards.php [L,QSA]
   RewriteRule ^admin/([a-z0-9_-]+)/?$ admin/$1.php [L,QSA]
+
+  # --- Canonical redirects (strip extensions from browser URL) ---
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S*?)index\.html[\s?] [NC]
+  RewriteRule ^index\.html$ %1 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)\.html[\s?] [NC]
+  RewriteRule \.html$ %1 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/(verify|create_order)\.php[\s?] [NC]
+  RewriteRule ^(verify|create_order)\.php$ %1/%2 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/admin/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule ^admin/([^.?\s]+)\.php$ %1/admin/%2 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/api/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule ^api/([^.?\s]+)\.php$ %1/api/%2 [R=301,L]
+
+  # --- Serve real files and directories ---
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 </IfModule>
 
 DirectoryIndex index.html

@@ -2,16 +2,17 @@
 /**
  * One-time setup: create the first admin user.
  */
-session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
-session_start();
+require_once dirname(__DIR__) . '/lib/session.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/paths.php';
+
+hgay_session_start();
 
 $pdo = dbConnection();
 $stmt = $pdo->query('SELECT COUNT(*) FROM admin_users');
 $count = (int) $stmt->fetchColumn();
 if ($count > 0) {
-  header('Location: ' . admin_url('login'));
+  header('Location: ' . admin_url('login'), true, 302);
   exit;
 }
 
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username, $hash]);
     $_SESSION['admin_user_id'] = (int) $pdo->lastInsertId();
     $_SESSION['admin_username'] = $username;
-    header('Location: ' . admin_url('dashboard'));
+    header('Location: ' . admin_url('dashboard'), true, 302);
     exit;
   }
 }
