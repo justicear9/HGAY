@@ -1,0 +1,15 @@
+# Secrets — copy from *.example.php locally
+paystack_config.php
+config/mail.php
+config/database.php
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# XAMPP / local
+.env
+.env.local
