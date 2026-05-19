@@ -97,6 +97,8 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png" type="image/png">
+  <link rel="apple-touch-icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title><?php echo $verified ? 'Payment successful' : 'Payment verification'; ?> — How Ghanaian Are You?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
