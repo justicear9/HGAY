@@ -1,24 +1,28 @@
 # Clean URLs: hide index.html and strip .html / .php from browser URLs.
-# If the site lives in a subfolder, set RewriteBase to match (e.g. /HGAY/).
+# Works at domain root or in a subfolder (no hardcoded /HGAY/ path).
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /HGAY/
 
-  # Redirect visible extensions to canonical paths
-  RewriteCond %{THE_REQUEST} \s/+HGAY/index\.html[\s?] [NC]
-  RewriteRule ^index\.html$ /HGAY/ [R=301,L]
+  # Avoid Apache "negotiating" gallery / fact-check as directories
+  <IfModule mod_negotiation.c>
+    Options -MultiViews
+  </IfModule>
 
-  RewriteCond %{THE_REQUEST} \s/+HGAY/([^.?\s]+)\.html[\s?] [NC]
-  RewriteRule ^ /HGAY/%1 [R=301,L]
+  # Redirect visible extensions to canonical paths (path-aware)
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S*?)index\.html[\s?] [NC]
+  RewriteRule ^index\.html$ %1 [R=301,L]
 
-  RewriteCond %{THE_REQUEST} \s/+HGAY/(verify|create_order)\.php[\s?] [NC]
-  RewriteRule ^ /HGAY/%1 [R=301,L]
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)\.html[\s?] [NC]
+  RewriteRule \.html$ %1 [R=301,L]
 
-  RewriteCond %{THE_REQUEST} \s/+HGAY/admin/([^.?\s]+)\.php[\s?] [NC]
-  RewriteRule ^ /HGAY/admin/%1 [R=301,L]
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/(verify|create_order)\.php[\s?] [NC]
+  RewriteRule ^(verify|create_order)\.php$ %1/%2 [R=301,L]
 
-  RewriteCond %{THE_REQUEST} \s/+HGAY/api/([^.?\s]+)\.php[\s?] [NC]
-  RewriteRule ^ /HGAY/api/%1 [R=301,L]
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/admin/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule \.php$ %1/admin/%2 [R=301,L]
+
+  RewriteCond %{THE_REQUEST} \s\S+\s+(\S+?)/api/([^.?\s]+)\.php[\s?] [NC]
+  RewriteRule \.php$ %1/api/%2 [R=301,L]
 
   # Serve existing files (css, js, images, etc.) as-is
   RewriteCond %{REQUEST_FILENAME} -f
