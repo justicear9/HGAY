@@ -97,7 +97,7 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title><?php echo $verified ? 'Payment successful' : 'Payment verification'; ?> — How Ghanaian Are You?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,13 +116,13 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
     <div class="verify-box">
       <?php if ($verified): ?>
         <h1 class="section-title">Thank you!</h1>
-        <p>Your preorder payment of <strong><?php echo htmlspecialchars($amountFormatted); ?></strong> was successful. We'll be in touch with delivery details.</p>
+        <p>Your order payment of <strong><?php echo htmlspecialchars($amountFormatted); ?></strong> was successful. We'll be in touch with delivery details.</p>
         <p><small>Reference: <?php echo htmlspecialchars($reference); ?></small></p>
         <a href="index.html" class="btn btn-primary">Back to home</a>
       <?php else: ?>
         <h1 class="section-title">Verification failed</h1>
         <p><?php echo htmlspecialchars($error); ?></p>
-        <a href="index.html#preorder" class="btn btn-primary">Try again</a>
+        <a href="index.html#place-order" class="btn btn-primary">Try again</a>
       <?php endif; ?>
     </div>
   </main>

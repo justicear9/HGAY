@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/lib/settings.php';
 
 $countries = require __DIR__ . '/config/countries.php';
 $dialCodes = $countries['dial_codes'];
@@ -63,7 +64,8 @@ if (strlen($raw['delivery_address']) < 5 || strlen($raw['delivery_address']) > 2
   $errors[] = 'Address must be 5–2000 characters.';
 }
 
-$amountGhs = 100;
+$pdo = dbConnection();
+$amountGhs = getProductPriceGhs($pdo);
 $amountPesewas = (int) round($amountGhs * 100) * $raw['quantity'];
 $phoneFull = $dialCodes[$raw['phone_country']] . $raw['phone_number'];
 
@@ -74,7 +76,6 @@ if (!empty($errors)) {
 }
 
 try {
-  $pdo = dbConnection();
   $stmt = $pdo->prepare("
     INSERT INTO orders (
       name, email, phone_country, phone_full, quantity, amount_pesewas, currency,

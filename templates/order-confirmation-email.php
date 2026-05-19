@@ -55,7 +55,7 @@ $green = '#006B3F';
                       <tr>
                         <td style="padding: 16px 0; border-top: 1px solid rgba(252,209,56,0.4); border-bottom: 1px solid rgba(252,209,56,0.4);">
                           <p style="margin:0; font-size: 16px; color: #e0e0e0; line-height: 1.5;">Hi <?php echo $name; ?>,</p>
-                          <p style="margin: 12px 0 0; font-size: 15px; color: #b0b0b0; line-height: 1.5;">Your preorder is confirmed. We've received your payment of <strong style="color: <?php echo $gold; ?>;"><?php echo $amountFormatted; ?></strong> for <strong><?php echo $quantity; ?></strong> game<?php echo $quantity > 1 ? 's' : ''; ?>.</p>
+                          <p style="margin: 12px 0 0; font-size: 15px; color: #b0b0b0; line-height: 1.5;">Your order is confirmed. We've received your payment of <strong style="color: <?php echo $gold; ?>;"><?php echo $amountFormatted; ?></strong> for <strong><?php echo $quantity; ?></strong> game<?php echo $quantity > 1 ? 's' : ''; ?>.</p>
                         </td>
                       </tr>
                       <tr>

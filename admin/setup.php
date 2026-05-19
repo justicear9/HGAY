@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username, $hash]);
     $_SESSION['admin_user_id'] = (int) $pdo->lastInsertId();
     $_SESSION['admin_username'] = $username;
-    header('Location: index.php');
+    header('Location: dashboard.php');
     exit;
   }
 }
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
   <title>Create admin — HGAY</title>
   <link rel="stylesheet" href="../css/styles.css">
   <style> body { padding: 2rem; max-width: 360px; margin: 0 auto; } .form-group { margin-bottom: 1rem; } label { display: block; margin-bottom: 4px; } input { width: 100%; padding: 10px; } .error { color: #dc3545; margin-bottom: 1rem; } </style>

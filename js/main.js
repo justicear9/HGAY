@@ -123,7 +123,19 @@ function initPreorderForm() {
   const phoneNumberInput = document.getElementById('phone_number');
   const phoneHintEl = document.getElementById('phone-hint');
 
-  const amountPerGame = parseFloat(form.getAttribute('data-amount-ghs')) || 100;
+  let amountPerGame = parseFloat(form.getAttribute('data-amount-ghs')) || 100;
+  const pricePerEl = document.querySelector('.preorder-price-per');
+
+  fetch('api/get_settings.php')
+    .then((r) => r.json())
+    .then((s) => {
+      if (s.price_ghs) {
+        amountPerGame = parseFloat(s.price_ghs);
+        if (pricePerEl) pricePerEl.textContent = amountPerGame.toFixed(0) + ' GHS per game';
+        updateQuantity(currentQty);
+      }
+    })
+    .catch(() => {});
 
   let countryPostcodeMap = {};
   let countryPhoneLengths = {}; // code -> { min_digits, max_digits }

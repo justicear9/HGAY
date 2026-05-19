@@ -7,7 +7,7 @@ session_start();
 require_once dirname(__DIR__) . '/config/database.php';
 
 if (!empty($_SESSION['admin_user_id'])) {
-  header('Location: index.php');
+  header('Location: dashboard.php');
   exit;
 }
 
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password_hash'])) {
       $_SESSION['admin_user_id'] = (int) $user['id'];
       $_SESSION['admin_username'] = $username;
-      header('Location: index.php');
+      header('Location: dashboard.php');
       exit;
     }
     $error = 'Invalid username or password.';
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
   <title>Admin login — How Ghanaian Are You</title>
   <link rel="stylesheet" href="../css/styles.css">
   <style>

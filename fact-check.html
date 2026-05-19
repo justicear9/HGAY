@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Fact Check — How Ghanaian Are You?</title>
+  <meta name="description" content="Settle debates and confirm answers from How Ghanaian Are You? Search the official Fact Check sheet.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/fact-check.css">
+</head>
+<body>
+  <div class="kente-frame">
+    <div class="kente-border kente-top"></div>
+    <div class="kente-border kente-bottom"></div>
+    <div class="kente-border kente-left"></div>
+    <div class="kente-border kente-right"></div>
+  </div>
+
+  <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <img src="HGAY ASSETS/Card Pictures and Video/howghrupng.png" alt="How Ghanaian Are You">
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html#about">About</a>
+      <a href="index.html#gameplay">How to Play</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="fact-check.html" class="nav-active">Fact Check</a>
+      <a href="index.html#place-order" class="nav-cta">Place an Order</a>
+    </div>
+    <button class="nav-mobile-toggle" aria-label="Toggle menu" type="button">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <main class="fc-page">
+    <header class="fc-hero">
+      <p class="fc-eyebrow">Fact Check Sheet &amp; Knowledge Guide</p>
+      <h1 class="fc-title">Fact Check Sheet</h1>
+      <p class="fc-lead">Use this guide to settle debates and learn something new. Tap a card to flip and reveal the answer.</p>
+    </header>
+
+    <section class="fc-search-section">
+      <div class="fc-search-bar">
+        <label for="fc-search" class="visually-hidden">Search</label>
+        <input type="search" id="fc-search" placeholder="Search questions, answers, keywords…" autocomplete="off" aria-controls="fc-results">
+        <select id="fc-category" aria-label="Filter by category">
+          <option value="">All categories</option>
+        </select>
+      </div>
+      <p class="fc-search-hint" id="fc-count" aria-live="polite"></p>
+    </section>
+
+    <section class="fc-results" id="fc-results" aria-live="polite"></section>
+
+    <section class="fc-references" id="fc-references" hidden aria-label="Card references glossary"></section>
+
+    <p class="fc-footer-note">© How Ghanaian Are You • Nezer&amp;Friends</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <img src="HGAY ASSETS/Card Pictures and Video/howghrupng.png" alt="" class="footer-logo">
+      <p class="footer-tagline">Celebrating Ghanaian pride, one card at a time.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/fact-check-data.js"></script>
+  <script src="js/fact-check.js"></script>
+</body>
+</html>

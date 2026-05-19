@@ -4,6 +4,11 @@
    UX: Focus states, reduced-motion, 150–300ms transitions
    ============================================ */
 
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
 :root {
   --bg-primary: #0a0a0b;
   --bg-secondary: #111113;
@@ -1315,9 +1320,10 @@ main {
   }
 
   .preorder-form input,
-  .preorder-form select {
+  .preorder-form select,
+  .preorder-form textarea {
     padding: 16px 18px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px; /* Prevents zoom on iOS when viewport zoom is disabled */
   }
 
   .btn {
