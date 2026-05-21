@@ -2,21 +2,26 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6"></script>
+  <!-- Google tag (gtag.js) — deferred until after load -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-CFRH43PWP6');
+    window.addEventListener('load', function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6';
+      s.onload = function () {
+        gtag('js', new Date());
+        gtag('config', 'G-CFRH43PWP6');
+      };
+      document.head.appendChild(s);
+    });
   </script>
-  <link rel="icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png" type="image/png">
-  <link rel="apple-touch-icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png">
+  <link rel="icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png" type="image/png">
+  <link rel="apple-touch-icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Gallery — How Ghanaian Are You?</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Photos and videos of the How Ghanaian Are You? card game — box, cards, and community moments.">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/gallery.css">
 </head>
@@ -31,7 +36,7 @@
   <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
   <nav class="nav">
     <a href="../" class="nav-logo">
-      <img src="HGAY ASSETS/logo.png" alt="How Ghanaian Are You">
+      <img src="HGAY_ASSETS/logo.png" alt="How Ghanaian Are You">
     </a>
     <div class="nav-links" id="nav-links">
       <a href="../">Home</a>
@@ -58,8 +63,8 @@
     </div>
   </main>
 
-  <script src="js/main.js"></script>
-  <script src="js/gallery-data.js"></script>
-  <script src="js/gallery.js"></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/gallery-data.js" defer></script>
+  <script src="js/gallery.js" defer></script>
 </body>
 </html>

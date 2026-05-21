@@ -2,22 +2,26 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6"></script>
+  <!-- Google tag (gtag.js) — deferred until after load -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-CFRH43PWP6');
+    window.addEventListener('load', function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6';
+      s.onload = function () {
+        gtag('js', new Date());
+        gtag('config', 'G-CFRH43PWP6');
+      };
+      document.head.appendChild(s);
+    });
   </script>
-  <link rel="icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png" type="image/png">
-  <link rel="apple-touch-icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png">
+  <link rel="icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png" type="image/png">
+  <link rel="apple-touch-icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Fact Check — How Ghanaian Are You?</title>
   <meta name="description" content="Settle debates and confirm answers from How Ghanaian Are You? Search the official Fact Check sheet.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/fact-check.css">
 </head>
@@ -32,7 +36,7 @@
   <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
   <nav class="nav">
     <a href="../" class="nav-logo">
-      <img src="HGAY ASSETS/logo.png" alt="How Ghanaian Are You">
+      <img src="HGAY_ASSETS/logo.png" alt="How Ghanaian Are You">
     </a>
     <div class="nav-links" id="nav-links">
       <a href="../">Home</a>
@@ -75,13 +79,13 @@
 
   <footer class="footer">
     <div class="container">
-      <img src="HGAY ASSETS/logo.png" alt="" class="footer-logo">
+      <img src="HGAY_ASSETS/logo.png" alt="" class="footer-logo">
       <p class="footer-tagline">Celebrating Ghanaian pride, one card at a time.</p>
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
-  <script src="js/fact-check-data.js"></script>
-  <script src="js/fact-check.js"></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/fact-check-data.js" defer></script>
+  <script src="js/fact-check.js" defer></script>
 </body>
 </html>

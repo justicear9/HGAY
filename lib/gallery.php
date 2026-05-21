@@ -2,6 +2,27 @@
 /**
  * Gallery upload and path helpers.
  */
+
+/** Map legacy folder names to current HGAY_ASSETS layout. */
+function gallery_normalize_asset_path(string $path): string
+{
+    $path = trim(str_replace('\\', '/', $path));
+    if ($path === '') {
+        return $path;
+    }
+
+    $replacements = [
+        'HGAY ASSETS/' => 'HGAY_ASSETS/',
+        'Card Pictures and Video/' => 'Card_Pictures_and_Video/',
+        'white bg/' => 'white_bg/',
+    ];
+    foreach ($replacements as $from => $to) {
+        $path = str_replace($from, $to, $path);
+    }
+
+    return $path;
+}
+
 function gallery_upload_dir(): string
 {
     return dirname(__DIR__) . '/uploads/gallery';
@@ -13,11 +34,12 @@ function gallery_is_valid_path(string $path): bool
     if ($path === '' || str_contains($path, '..')) {
         return false;
     }
-    return (bool) preg_match('#^(uploads/gallery/|HGAY ASSETS/).+#u', $path);
+    return (bool) preg_match('#^(uploads/gallery/|HGAY_ASSETS/).+#u', $path);
 }
 
 function gallery_resolve_path(string $path): ?string
 {
+    $path = gallery_normalize_asset_path($path);
     if (!gallery_is_valid_path($path)) {
         return null;
     }

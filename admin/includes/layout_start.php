@@ -6,8 +6,8 @@
 $adminTitle = $adminTitle ?? 'Admin';
 $adminPage = $adminPage ?? '';
 $username = $_SESSION['admin_username'] ?? 'Admin';
-$logoSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
-$faviconSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
+$logoSrc = '../HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png';
+$faviconSrc = '../HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png';
 
 $pendingOrders = 0;
 try {
@@ -40,6 +40,11 @@ $navAccount = [
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <?php
+  require_once dirname(__DIR__) . '/../lib/seo.php';
+  hgay_seo_send_noindex();
+  require dirname(__DIR__) . '/../partials/seo-noindex.php';
+  ?>
   <link rel="icon" href="<?php echo htmlspecialchars($faviconSrc); ?>" type="image/png">
   <link rel="apple-touch-icon" href="<?php echo htmlspecialchars($faviconSrc); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">

@@ -42,3 +42,14 @@ function admin_url(string $page = ''): string
     $page = ltrim($page, '/');
     return site_url('admin' . ($page !== '' ? '/' . $page : ''));
 }
+
+/**
+ * URL-encode each path segment when building absolute URLs (unicode filenames, etc.).
+ */
+function hgay_asset_path(string $relative): string
+{
+    $relative = ltrim(str_replace('\\', '/', $relative), '/');
+    $segments = explode('/', $relative);
+
+    return implode('/', array_map('rawurlencode', $segments));
+}

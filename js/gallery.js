@@ -8,6 +8,12 @@
     return d.innerHTML;
   }
 
+  /** Encode each path segment for URLs (spaces, unicode filenames). */
+  function assetUrl(relativePath) {
+    if (!relativePath) return '';
+    return relativePath.split('/').map((part) => encodeURIComponent(part)).join('/');
+  }
+
   function layoutClass(layout, mediaType) {
     if (mediaType === 'video' || layout === 'video') return 'gallery-full-item gallery-full-item-video';
     if (layout === 'wide') return 'gallery-full-item gallery-full-item-wide';
@@ -15,9 +21,9 @@
   }
 
   function renderItem(item, previewMode) {
-    const path = escapeHtml(item.file_path);
+    const path = escapeHtml(assetUrl(item.file_path));
     const alt = escapeHtml(item.alt_text || '');
-    const poster = item.poster_path ? escapeHtml(item.poster_path) : '';
+    const poster = item.poster_path ? escapeHtml(assetUrl(item.poster_path)) : '';
 
     if (previewMode) {
       return `<div class="gallery-item"><img src="${path}" alt="${alt}" loading="lazy"></div>`;

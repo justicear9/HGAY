@@ -2,6 +2,7 @@
 paystack_config.php
 config/mail.php
 config/database.php
+config/site.php
 
 # OS / editor
 .DS_Store

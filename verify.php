@@ -15,6 +15,8 @@ $currency = 'GHS';
 $amountFormatted = '0.00 GHS';
 
 require_once __DIR__ . '/lib/paths.php';
+require_once __DIR__ . '/lib/seo.php';
+hgay_seo_send_noindex();
 
 try {
   require_once __DIR__ . '/paystack_config.php';
@@ -99,9 +101,10 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
   <?php require __DIR__ . '/partials/google-analytics.php'; ?>
-  <link rel="icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png" type="image/png">
-  <link rel="apple-touch-icon" href="HGAY ASSETS/Card Pictures and Video/howghrupng.png">
+  <link rel="icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png" type="image/png">
+  <link rel="apple-touch-icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title><?php echo $verified ? 'Payment successful' : 'Payment verification'; ?> — How Ghanaian Are You?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       if ($error === '' && $filePath === '') {
         $error = 'Upload a file or enter a file path.';
       } elseif ($error === '' && !gallery_is_valid_path($filePath)) {
-        $error = 'Invalid file path. Use uploads/gallery/… or HGAY ASSETS/…';
+        $error = 'Invalid file path. Use uploads/gallery/… or HGAY_ASSETS/…';
       } elseif ($error === '' && $posterPath !== '' && !gallery_is_valid_path($posterPath)) {
         $error = 'Invalid poster path.';
       } elseif ($error === '') {
@@ -173,7 +173,7 @@ require_once 'includes/layout_start.php';
           </div>
           <div class="form-row">
             <label for="file_path">Or existing path</label>
-            <input type="text" name="file_path" id="file_path" placeholder="uploads/gallery/… or HGAY ASSETS/…" value="<?php echo $editItem ? htmlspecialchars($editItem['file_path']) : ''; ?>">
+            <input type="text" name="file_path" id="file_path" placeholder="uploads/gallery/… or HGAY_ASSETS/…" value="<?php echo $editItem ? htmlspecialchars($editItem['file_path']) : ''; ?>">
             <p class="hint">Leave upload empty when editing to keep the current file.</p>
           </div>
           <div class="form-row">

@@ -5,18 +5,12 @@
  */
 declare(strict_types=1);
 
-require_once __DIR__ . '/lib/paths.php';
+require_once __DIR__ . '/lib/seo.php';
 
 header('Content-Type: application/xml; charset=UTF-8');
-header('X-Robots-Tag: noindex'); // sitemap file itself should not rank
+header('X-Robots-Tag: noindex');
 
-$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443)
-    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-$scheme = $https ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$base = hgay_base_path();
-$origin = rtrim($scheme . '://' . $host . ($base === '' ? '' : $base), '/');
+$origin = hgay_canonical_origin();
 
 /** @return array<int, array{loc: string, lastmod: string, changefreq: string, priority: string}> */
 function hgay_sitemap_entries(string $origin): array

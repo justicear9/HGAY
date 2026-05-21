@@ -1,8 +1,15 @@
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6"></script>
+<!-- Google tag (gtag.js) — loaded after page load to avoid blocking LCP -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-CFRH43PWP6');
+  window.addEventListener('load', function () {
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CFRH43PWP6';
+    s.onload = function () {
+      gtag('js', new Date());
+      gtag('config', 'G-CFRH43PWP6');
+    };
+    document.head.appendChild(s);
+  });
 </script>

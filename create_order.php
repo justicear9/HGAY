@@ -5,6 +5,7 @@
  */
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
+header('X-Robots-Tag: noindex, nofollow');
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/lib/settings.php';

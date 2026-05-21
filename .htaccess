@@ -9,10 +9,11 @@
 
   # --- Clean URL routing (before -f/-d so /admin is not blocked by admin/ folder) ---
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
-  RewriteRule ^$ index.html [L]
-  RewriteRule ^gallery/?$ gallery.html [L]
-  RewriteRule ^fact-check/?$ fact-check.html [L]
-  RewriteRule ^events/?$ events.html [L]
+  RewriteRule ^robots\.txt$ robots.php [L]
+  RewriteRule ^$ index.php [L]
+  RewriteRule ^gallery/?$ gallery.php [L]
+  RewriteRule ^fact-check/?$ fact-check.php [L]
+  RewriteRule ^events/?$ events.php [L]
   RewriteRule ^verify/?$ verify.php [L,QSA]
   RewriteRule ^create_order/?$ create_order.php [L]
 
@@ -50,4 +51,24 @@
   RewriteRule ^ - [L]
 </IfModule>
 
-DirectoryIndex index.html
+DirectoryIndex index.php index.html
+
+# Cache static assets (PageSpeed: efficient cache lifetimes)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 week"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType video/mp4 "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|webp|png|jpe?g|gif|svg|mp4)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>

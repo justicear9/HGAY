@@ -157,7 +157,7 @@ function initPreorderForm() {
       for (let i = 0; i < qty; i++) {
         const box = document.createElement('img');
         box.className = 'preorder-card-box';
-        box.src = 'HGAY ASSETS/Card Pictures and Video/box.png';
+        box.src = 'HGAY_ASSETS/Card_Pictures_and_Video/box.png';
         box.alt = 'Game box';
         box.loading = 'lazy';
         cardsStackEl.appendChild(box);
@@ -336,6 +336,7 @@ function initPreorderForm() {
         }
         btn.textContent = 'Opening payment…';
         const ref = 'HGAY-' + data.order_id + '-' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 8);
+        const openPaystack = (PaystackPop) => {
         const handler = PaystackPop.setup({
           key: PAYSTACK_PUBLIC_KEY,
           email: data.email,
@@ -356,6 +357,20 @@ function initPreorderForm() {
           },
         });
         handler.openIframe();
+        };
+        const startPaystack = typeof loadPaystack === 'function'
+          ? loadPaystack()
+          : Promise.resolve(window.PaystackPop);
+        startPaystack
+          .then((PaystackPop) => {
+            if (!PaystackPop) throw new Error('Paystack unavailable');
+            openPaystack(PaystackPop);
+          })
+          .catch(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            showError('Could not load payment. Check your connection and try again.');
+          });
       })
       .catch(() => {
         btn.textContent = originalText;
