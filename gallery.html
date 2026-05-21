@@ -13,7 +13,6 @@
   <link rel="stylesheet" href="css/gallery.css">
 </head>
 <body>
-  <!-- Kente border frame -->
   <div class="kente-frame">
     <div class="kente-border kente-top"></div>
     <div class="kente-border kente-bottom"></div>
@@ -36,9 +35,7 @@
       <a href="../#place-order" class="nav-cta">Place an Order</a>
     </div>
     <button class="nav-mobile-toggle" aria-label="Toggle menu" type="button">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span><span></span><span></span>
     </button>
   </nav>
 
@@ -47,42 +44,14 @@
       <h1 class="gallery-title">Full Gallery</h1>
       <p class="gallery-subtitle">All images and videos from How Ghanaian Are You</p>
 
-      <div class="gallery-full-grid">
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0486 拷贝.jpg" alt="Card game box and cards">
-        </div>
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0488 拷贝.jpg" alt="Game components">
-        </div>
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0492 拷贝.jpg" alt="How Ghanaian Are You card game">
-        </div>
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0494 拷贝.jpg" alt="Game cards showcase">
-        </div>
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0496 拷贝.jpg" alt="Card game details">
-        </div>
-        <div class="gallery-full-item">
-          <img src="HGAY ASSETS/Card Pictures and Video/white bg/_BRX0497 拷贝.jpg" alt="Card game details">
-        </div>
-        <div class="gallery-full-item gallery-full-item-wide">
-          <img src="HGAY ASSETS/photo_2026-01-31_11-31-19.jpg" alt="Community enjoying How Ghanaian Are You">
-        </div>
-        <div class="gallery-full-item gallery-full-item-video">
-          <video src="HGAY ASSETS/C0126_1.mp4" controls playsinline poster="HGAY ASSETS/Card Pictures and Video/_BRX0486 拷贝.png"></video>
-          <span class="video-label">Launch Video</span>
-        </div>
-        <div class="gallery-full-item gallery-full-item-video">
-          <video src="HGAY ASSETS/IMG_5886.MOV" controls playsinline></video>
-          <span class="video-label">Gameplay</span>
-        </div>
-      </div>
+      <div class="gallery-full-grid" id="gallery-full-grid" aria-live="polite"></div>
 
       <a href="../#place-order" class="btn btn-primary gallery-cta">Place an Order</a>
     </div>
   </main>
 
   <script src="js/main.js"></script>
+  <script src="js/gallery-data.js"></script>
+  <script src="js/gallery.js"></script>
 </body>
 </html>

@@ -119,9 +119,11 @@ require_once 'includes/layout_start.php';
             <li><a href="settings"><?php echo admin_icon('settings'); ?> Product price &amp; setup</a></li>
             <li><a href="fact-cards"><?php echo admin_icon('book'); ?> Manage Fact Check</a></li>
             <li><a href="events"><?php echo admin_icon('calendar'); ?> Manage Events</a></li>
+            <li><a href="gallery"><?php echo admin_icon('image'); ?> Manage Gallery</a></li>
             <li><a href="card-references"><?php echo admin_icon('tag'); ?> Card references</a></li>
             <li><a href="<?php echo htmlspecialchars(site_url('fact-check')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview Fact Check</a></li>
             <li><a href="<?php echo htmlspecialchars(site_url('events')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview Events</a></li>
+            <li><a href="<?php echo htmlspecialchars(site_url('gallery')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview Gallery</a></li>
             <li><a href="<?php echo htmlspecialchars(site_url('#place-order')); ?>" target="_blank" rel="noopener"><?php echo admin_icon('external'); ?> Preview order page</a></li>
           </ul>
 

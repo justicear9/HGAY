@@ -22,6 +22,7 @@
   RewriteRule ^admin/setup/?$ admin/setup.php [L]
   RewriteRule ^admin/logout/?$ admin/logout.php [L]
   RewriteRule ^admin/seed_fact_cards/?$ admin/seed_fact_cards.php [L,QSA]
+  RewriteRule ^admin/seed_gallery/?$ admin/seed_gallery.php [L,QSA]
   RewriteRule ^admin/([a-z0-9_-]+)/?$ admin/$1.php [L,QSA]
 
   # --- Canonical redirects (strip extensions from browser URL) ---

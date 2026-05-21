@@ -13,3 +13,8 @@ Thumbs.db
 # XAMPP / local
 .env
 .env.local
+
+# User-uploaded gallery media (keep folder)
+uploads/gallery/*
+!uploads/gallery/.gitkeep
+!uploads/gallery/.htaccess

@@ -78,4 +78,19 @@ CREATE TABLE IF NOT EXISTS events (
   INDEX idx_active (is_active)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS gallery_items (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  media_type ENUM('image', 'video') NOT NULL DEFAULT 'image',
+  file_path VARCHAR(500) NOT NULL,
+  alt_text VARCHAR(255) NOT NULL DEFAULT '',
+  caption VARCHAR(128) DEFAULT NULL,
+  poster_path VARCHAR(500) DEFAULT NULL,
+  layout ENUM('normal', 'wide', 'video') NOT NULL DEFAULT 'normal',
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_active_sort (is_active, sort_order)
+) ENGINE=InnoDB;
+
 -- After import: log in to admin → Settings → Seed Fact Check cards (or admin/seed_fact_cards.php)

@@ -1,0 +1,5 @@
+# Do not execute scripts in upload directory
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+Options -Indexes
