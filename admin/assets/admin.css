@@ -762,6 +762,7 @@
   width: min(180px, 65vw);
   height: auto;
   margin-bottom: 1.25rem;
+  object-fit: contain;
 }
 
 .admin-auth-heading {

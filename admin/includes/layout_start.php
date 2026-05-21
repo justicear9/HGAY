@@ -7,7 +7,7 @@ $adminTitle = $adminTitle ?? 'Admin';
 $adminPage = $adminPage ?? '';
 $username = $_SESSION['admin_username'] ?? 'Admin';
 $logoSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
-$faviconSrc = $logoSrc;
+$faviconSrc = '../HGAY ASSETS/Card Pictures and Video/howghrupng.png';
 
 $pendingOrders = 0;
 try {
