@@ -8,6 +8,7 @@
   </IfModule>
 
   # --- Clean URL routing (before -f/-d so /admin is not blocked by admin/ folder) ---
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
   RewriteRule ^$ index.html [L]
   RewriteRule ^gallery/?$ gallery.html [L]
   RewriteRule ^fact-check/?$ fact-check.html [L]

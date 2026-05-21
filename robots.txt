@@ -1,0 +1,12 @@
+# Public crawlers — block admin, API, and config
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /config/
+Disallow: /uploads/
+Disallow: /create_order
+Disallow: /verify
+
+# Submit this exact URL in Google Search Console (use your live https domain):
+# Sitemap: https://YOUR-DOMAIN.com/sitemap.xml
