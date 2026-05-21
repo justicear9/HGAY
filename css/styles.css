@@ -94,7 +94,7 @@ body {
   height: 14px;
   left: 0;
   right: 0;
-  background-image: url('../HGAY_ASSETS/Card_Pictures_and_Video/kentepatternpng_horizontal.png');
+  background-image: url('../HGAY ASSETS/Card Pictures and Video/kentepatternpng_horizontal.png');
   background-repeat: repeat-x;
   background-size: auto 100%;
 }
@@ -114,7 +114,7 @@ body {
   width: 14px;
   top: 14px;
   bottom: 14px;
-  background-image: url('../HGAY_ASSETS/Card_Pictures_and_Video/kentepatternpng.png');
+  background-image: url('../HGAY ASSETS/Card Pictures and Video/kentepatternpng.png');
   background-repeat: repeat-y;
   background-size: 100% auto;
 }
@@ -650,6 +650,13 @@ main {
 }
 
 /* Gallery */
+/* Defer layout/paint for below-the-fold blocks (helps desktop lab TBT). */
+.gallery-preview,
+.section:not(.hero) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
 .gallery-preview {
   display: flex;
   flex-direction: column;

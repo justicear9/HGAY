@@ -26,7 +26,7 @@
     const poster = item.poster_path ? escapeHtml(assetUrl(item.poster_path)) : '';
 
     if (previewMode) {
-      return `<div class="gallery-item"><img src="${path}" alt="${alt}" loading="lazy"></div>`;
+      return `<div class="gallery-item"><img src="${path}" alt="${alt}" width="320" height="320" loading="lazy" decoding="async" sizes="(max-width: 768px) 45vw, 200px"></div>`;
     }
 
     const cls = layoutClass(item.layout, item.media_type);
@@ -78,6 +78,37 @@
     grid.innerHTML = items.map((item) => renderItem(item, true)).join('');
   }
 
+  /** Run after paint / when user scrolls near gallery — keeps desktop TBT low. */
+  function runWhenIdle(fn) {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(fn, { timeout: 2500 });
+    } else {
+      setTimeout(fn, 200);
+    }
+  }
+
+  function deferPreview() {
+    const section = document.querySelector('.gallery-preview');
+    if (!document.getElementById('gallery-preview-grid')) return;
+
+    const load = () => {
+      void initPreview();
+    };
+
+    if (section && 'IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          obs.disconnect();
+          runWhenIdle(load);
+        }
+      }, { rootMargin: '240px' });
+      obs.observe(section);
+      return;
+    }
+
+    runWhenIdle(load);
+  }
+
   initFullGallery();
-  initPreview();
+  deferPreview();
 })();
