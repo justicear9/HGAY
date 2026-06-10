@@ -216,6 +216,53 @@
   font-size: 0.98rem;
 }
 
+/* Reduce Motion: plain show/hide panels (no 3D — set in JS via .fc-flip--swap) */
+.fc-flip--swap {
+  perspective: none;
+}
+
+.fc-flip--swap .fc-flip-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.35rem 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  min-height: 9.5rem;
+  text-align: left;
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
+.fc-flip--swap .fc-flip-panel--front {
+  background: var(--bg-card);
+  border-left: 4px solid var(--ghana-gold);
+}
+
+.fc-flip--swap .fc-flip-panel--back {
+  background: linear-gradient(145deg, rgba(206, 17, 38, 0.12) 0%, var(--bg-card) 45%);
+  border-left: 4px solid var(--ghana-red);
+}
+
+.fc-flip--swap .fc-flip-panel--back[hidden] {
+  display: none !important;
+}
+
+.fc-flip--swap.is-flipped .fc-flip-panel--front {
+  display: none;
+}
+
+.fc-flip--swap.is-flipped .fc-flip-panel--back {
+  display: flex;
+}
+
+.fc-flip--swap .fc-flip-panel--back .fc-flip-text {
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+}
+
 .fc-loading {
   text-align: center;
   padding: 3rem;

@@ -89,7 +89,35 @@
     });
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /** No 3D transforms — avoids mirrored RTL text on iOS with Reduce Motion. */
+  function renderSwapCard(c) {
+    const ariaQ = escapeHtml(c.question).replace(/"/g, '&quot;');
+    return `
+      <div class="fc-card-wrap">
+        <p class="fc-card-category">${escapeHtml(c.categoryLabel)}</p>
+        <button type="button" class="fc-flip fc-flip--swap" aria-expanded="false" aria-label="Reveal answer for ${ariaQ}">
+          <span class="fc-flip-hint" aria-hidden="true">Tap to reveal answer</span>
+          <div class="fc-flip-panel fc-flip-panel--front">
+            <span class="fc-label">Card</span>
+            <span class="fc-flip-text">${escapeHtml(c.question)}</span>
+          </div>
+          <div class="fc-flip-panel fc-flip-panel--back" hidden>
+            <span class="fc-label">Answer</span>
+            <span class="fc-flip-text">${escapeHtml(c.answer)}</span>
+          </div>
+        </button>
+      </div>`;
+  }
+
   function renderFlipCard(c) {
+    if (prefersReducedMotion()) {
+      return renderSwapCard(c);
+    }
+
     const ariaQ = escapeHtml(c.question).replace(/"/g, '&quot;');
     return `
       <div class="fc-card-wrap">
@@ -177,11 +205,22 @@
     renderReferences(refs);
   }
 
+  function syncSwapPanels(btn, flipped) {
+    const front = btn.querySelector('.fc-flip-panel--front');
+    const back = btn.querySelector('.fc-flip-panel--back');
+    if (!front || !back) return;
+    front.hidden = flipped;
+    back.hidden = !flipped;
+  }
+
   function onFlipClick(e) {
     const btn = e.target.closest('.fc-flip');
     if (!btn || !resultsEl.contains(btn)) return;
     const flipped = btn.classList.toggle('is-flipped');
     btn.setAttribute('aria-expanded', flipped ? 'true' : 'false');
+    if (btn.classList.contains('fc-flip--swap')) {
+      syncSwapPanels(btn, flipped);
+    }
     const hint = btn.querySelector('.fc-flip-hint');
     if (hint) hint.textContent = flipped ? 'Tap to hide' : 'Tap to reveal answer';
   }
@@ -201,6 +240,13 @@
     debounceTimer = setTimeout(render, 200);
   });
   categorySelect.addEventListener('change', render);
+
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (typeof motionQuery.addEventListener === 'function') {
+    motionQuery.addEventListener('change', render);
+  } else if (typeof motionQuery.addListener === 'function') {
+    motionQuery.addListener(render);
+  }
 
   async function loadCards() {
     resultsEl.innerHTML = '<div class="fc-loading">Loading…</div>';

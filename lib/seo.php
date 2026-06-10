@@ -305,10 +305,32 @@ function hgay_seo_strip_blocking_fonts(string $html): string
  * @param array<string, mixed> $page
  * @param array<string, mixed> $opts
  */
+function hgay_cache_bust_local_assets(string $html): string
+{
+    $root = dirname(__DIR__);
+    $pattern = '/\b(href|src)=(["\'])(?!https?:|\/\/|data:|#)((?:css|js)\/[^"\'?#]+)\2/i';
+    $result = preg_replace_callback(
+        $pattern,
+        static function (array $m) use ($root): string {
+            $path = $m[3];
+            $file = $root . '/' . $path;
+            if (!is_file($file)) {
+                return $m[0];
+            }
+
+            return $m[1] . '=' . $m[2] . $path . '?v=' . filemtime($file) . $m[2];
+        },
+        $html
+    );
+
+    return is_string($result) ? $result : $html;
+}
+
 function hgay_seo_inject_html(string $html, array $page, array $opts = []): string
 {
     $pageKey = (string) ($opts['page_key'] ?? '');
     $html = hgay_seo_strip_blocking_fonts($html);
+    $html = hgay_cache_bust_local_assets($html);
 
     $markup = hgay_performance_head_markup($pageKey);
 
