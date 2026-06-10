@@ -312,15 +312,26 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Swap faces without 3D flip — inner must not keep rotateY(180deg) or text mirrors RTL. */
+  .fc-flip {
+    perspective: none;
+  }
+
   .fc-flip-inner {
     transition: none;
+    transform: none;
     transform-style: flat;
     min-height: auto;
+  }
+
+  .fc-flip.is-flipped .fc-flip-inner {
+    transform: none;
   }
 
   .fc-flip-face {
     position: relative;
     backface-visibility: visible;
+    -webkit-backface-visibility: visible;
     transform: none;
   }
 
@@ -336,5 +347,6 @@
 
   .fc-flip.is-flipped .fc-flip-back {
     display: flex;
+    transform: none;
   }
 }
