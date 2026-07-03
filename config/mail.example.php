@@ -1,11 +1,18 @@
 <?php
 /**
- * Copy to config/mail.php and set your SMTP credentials.
+ * Copy to config/mail.php on the server (not in Git).
+ *
+ * Use your hosting provider's SMTP settings — often:
+ * - Host: mail.yourdomain.com or smtp.yourhost.com
+ * - Port: 465 (SSL) or 587 (TLS — contact us if you need 587 support)
+ * - Username: full email address
+ * - Password: mailbox or app password
+ * - From: same mailbox (must be allowed to send)
  */
-define('MAIL_HOST', 'your-smtp-host');
+define('MAIL_HOST', 'mail.howghanaianareyou.com');
 define('MAIL_PORT', 465);
-define('MAIL_USERNAME', 'your@email.com');
-define('MAIL_PASSWORD', 'your_password');
+define('MAIL_USERNAME', 'orders@howghanaianareyou.com');
+define('MAIL_PASSWORD', 'your_mailbox_password');
 define('MAIL_ENCRYPTION', 'ssl');
-define('MAIL_FROM_ADDRESS', 'your@email.com');
+define('MAIL_FROM_ADDRESS', 'orders@howghanaianareyou.com');
 define('MAIL_FROM_NAME', 'How Ghanaian Are You');

@@ -1,28 +1,68 @@
 <?php
 /**
- * Paystack payment verification.
- * Called after customer completes payment (callback from Paystack popup).
- * Updates order to paid and stores Paystack reference.
+ * Payment return page — Hubtel redirect and legacy Paystack verification.
  */
-$reference = isset($_GET['reference']) ? trim($_GET['reference']) : '';
+declare(strict_types=1);
+
+$reference = isset($_GET['reference']) ? trim((string) $_GET['reference']) : '';
+$orderId = isset($_GET['order']) ? (int) $_GET['order'] : 0;
 $verified = false;
 $error = 'No transaction reference provided.';
-$data = null;
-$orderUpdated = false;
-$orderForEmail = null;
-$amount = 0;
-$currency = 'GHS';
 $amountFormatted = '0.00 GHS';
+$displayReference = $reference;
 
 require_once __DIR__ . '/lib/paths.php';
 require_once __DIR__ . '/lib/seo.php';
+require_once __DIR__ . '/lib/payment.php';
 hgay_seo_send_noindex();
 
 try {
-  require_once __DIR__ . '/paystack_config.php';
   require_once __DIR__ . '/config/database.php';
 
-  if ($reference !== '') {
+  if ($orderId > 0) {
+    $pdo = dbConnection();
+    $stmt = $pdo->prepare('SELECT id, status, amount_pesewas, currency, paystack_reference FROM orders WHERE id = ?');
+    $stmt->execute([$orderId]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$order) {
+      $error = 'Order not found.';
+    } elseif (($order['status'] ?? '') === 'paid') {
+      $verified = true;
+      $displayReference = (string) ($order['paystack_reference'] ?? '');
+      $amountFormatted = number_format(((int) $order['amount_pesewas']) / 100, 2) . ' ' . ($order['currency'] ?? 'GHS');
+    } else {
+      require_once __DIR__ . '/lib/hubtel.php';
+      require_once __DIR__ . '/lib/order-payment.php';
+
+      $invoiceId = trim((string) ($order['paystack_reference'] ?? ''));
+      if ($invoiceId === '') {
+        $invoiceId = hgay_hubtel_invoice_id($orderId);
+      }
+
+      $statusResult = hgay_hubtel_transaction_status($invoiceId);
+      $status = strtolower($statusResult['status']);
+      if ($status === 'completed' || $status === 'success') {
+        $transactionId = trim((string) ($statusResult['body']['TransactionId'] ?? $invoiceId));
+        $amountGhs = isset($statusResult['body']['Amount']) ? (float) $statusResult['body']['Amount'] : null;
+        $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
+        if ($mark['updated'] || ($order['status'] ?? '') === 'paid') {
+          $verified = true;
+          $displayReference = $transactionId;
+          $amountFormatted = number_format(((int) $order['amount_pesewas']) / 100, 2) . ' ' . ($order['currency'] ?? 'GHS');
+        } else {
+          $error = 'Payment is still processing. If you completed payment, we will confirm shortly by email.';
+        }
+      } elseif ($status === 'pending') {
+        $error = 'Payment is still processing. Please wait a moment and refresh this page.';
+      } else {
+        $error = 'Payment was not completed. You can try placing your order again.';
+      }
+    }
+  } elseif ($reference !== '' && hgay_payment_mode_is_paystack() && is_file(__DIR__ . '/paystack_config.php')) {
+    require_once __DIR__ . '/paystack_config.php';
+    require_once __DIR__ . '/lib/order-payment.php';
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.paystack.co/transaction/verify/' . rawurlencode($reference));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -31,70 +71,44 @@ try {
       'Cache-Control: no-cache',
     ]);
     $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
     $body = is_string($response) ? json_decode($response, true) : null;
     $verified = ($httpCode === 200 && !empty($body['status']) && !empty($body['data']['status']) && $body['data']['status'] === 'success');
     $data = $verified && isset($body['data']) ? $body['data'] : null;
-    $error = $verified ? null : (isset($body['message']) ? $body['message'] : 'Verification failed.');
+    $error = $verified ? '' : (isset($body['message']) ? (string) $body['message'] : 'Verification failed.');
 
-    if ($verified && $data) {
-      $orderId = null;
+    if ($verified && is_array($data)) {
+      $paystackOrderId = null;
       $metadata = isset($data['metadata']) && is_array($data['metadata']) ? $data['metadata'] : [];
       $customFields = isset($metadata['custom_fields']) && is_array($metadata['custom_fields']) ? $metadata['custom_fields'] : [];
       foreach ($customFields as $f) {
         if (isset($f['variable_name']) && $f['variable_name'] === 'order_id' && isset($f['value'])) {
-          $orderId = (int) $f['value'];
+          $paystackOrderId = (int) $f['value'];
           break;
         }
       }
-      if ($orderId) {
+      if ($paystackOrderId) {
         $pdo = dbConnection();
         $amountPaid = (int) $data['amount'];
-        $stmt = $pdo->prepare("
-          UPDATE orders SET status = 'paid', paystack_reference = :ref, updated_at = NOW()
-          WHERE id = :id AND status = 'pending' AND amount_pesewas = :amount
-        ");
-        $stmt->execute([':ref' => $reference, ':id' => $orderId, ':amount' => $amountPaid]);
-        $orderUpdated = $stmt->rowCount() > 0;
-        if ($orderUpdated) {
-          $stmt = $pdo->prepare("SELECT name, email, quantity, amount_pesewas, currency, paystack_reference FROM orders WHERE id = ?");
-          $stmt->execute([$orderId]);
-          $orderForEmail = $stmt->fetch();
-        }
+        $mark = hgay_order_mark_paid($pdo, $paystackOrderId, $reference, $amountPaid / 100);
+        $verified = $mark['updated'] || $verified;
       }
-    }
 
-    $amount = $data ? (int) $data['amount'] : 0;
-    $currency = $data ? (isset($data['currency']) ? $data['currency'] : 'GHS') : 'GHS';
-    $amountFormatted = $currency === 'GHS' ? number_format($amount / 100, 2) . ' GHS' : number_format($amount / 100, 2) . ' ' . $currency;
+      $amount = (int) $data['amount'];
+      $currency = isset($data['currency']) ? (string) $data['currency'] : 'GHS';
+      $amountFormatted = $currency === 'GHS'
+        ? number_format($amount / 100, 2) . ' GHS'
+        : number_format($amount / 100, 2) . ' ' . $currency;
+    }
+  } elseif ($reference === '' && $orderId < 1) {
+    $error = 'No payment information provided.';
   }
 } catch (Throwable $e) {
   error_log('verify.php: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
   $error = 'Something went wrong. Your payment may have succeeded—please check your email or contact us.';
   $verified = false;
-  $data = null;
-}
-
-if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
-  try {
-    require_once __DIR__ . '/config/mail.php';
-    require_once __DIR__ . '/lib/mail.php';
-    $order = $orderForEmail;
-    ob_start();
-    include __DIR__ . '/templates/order-confirmation-email.php';
-    $html = ob_get_clean();
-    if ($html !== false && $html !== '') {
-      sendSmtpMail(
-        $orderForEmail['email'],
-        'Order confirmed — How Ghanaian Are You?',
-        $html
-      );
-    }
-  } catch (Throwable $e) {
-    error_log('verify.php email send: ' . $e->getMessage());
-  }
 }
 ?>
 <!DOCTYPE html>
@@ -125,10 +139,12 @@ if ($orderUpdated && $orderForEmail && !empty($orderForEmail['email'])) {
       <?php if ($verified): ?>
         <h1 class="section-title">Thank you!</h1>
         <p>Your order payment of <strong><?php echo htmlspecialchars($amountFormatted); ?></strong> was successful. We'll be in touch with delivery details.</p>
-        <p><small>Reference: <?php echo htmlspecialchars($reference); ?></small></p>
+        <?php if ($displayReference !== ''): ?>
+        <p><small>Reference: <?php echo htmlspecialchars($displayReference); ?></small></p>
+        <?php endif; ?>
         <a href="<?php echo htmlspecialchars(site_url()); ?>" class="btn btn-primary">Back to home</a>
       <?php else: ?>
-        <h1 class="section-title">Verification failed</h1>
+        <h1 class="section-title"><?php echo $orderId > 0 ? 'Checking payment' : 'Verification failed'; ?></h1>
         <p><?php echo htmlspecialchars($error); ?></p>
         <a href="<?php echo htmlspecialchars(site_url('#place-order')); ?>" class="btn btn-primary">Try again</a>
       <?php endif; ?>

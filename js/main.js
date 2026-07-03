@@ -102,7 +102,7 @@ function initScrollAnimations() {
 //TEST KEY
 const PAYSTACK_PUBLIC_KEY = 'pk_test_df46ad3b11334755c7ae647ba76186fda3af8620';
 
-/** Preorder multi-step form: countries, steps, create_order, then Paystack. Delivery country = phone country. */
+/** Preorder multi-step form: countries, steps, create_order, then Paystack or pay on delivery. */
 function initPreorderForm() {
   const form = document.getElementById('preorder-form');
   if (!form) return;
@@ -125,6 +125,32 @@ function initPreorderForm() {
 
   let amountPerGame = parseFloat(form.getAttribute('data-amount-ghs')) || 100;
   const pricePerEl = document.querySelector('.preorder-price-per');
+  const submitBtn = document.getElementById('preorder-submit');
+  const disclaimerEl = document.getElementById('preorder-disclaimer');
+  let paymentMode = 'pay_on_delivery';
+
+  function applyPaymentModeUI() {
+    const isCod = paymentMode === 'pay_on_delivery';
+    const isHubtel = paymentMode === 'hubtel';
+    if (submitBtn) {
+      if (isCod) {
+        submitBtn.textContent = 'Place order — pay on delivery';
+      } else if (isHubtel) {
+        submitBtn.textContent = 'Pay with Hubtel';
+      } else {
+        submitBtn.textContent = 'Pay with Paystack';
+      }
+    }
+    if (disclaimerEl) {
+      if (isCod) {
+        disclaimerEl.textContent = "Pay when your order is delivered. We'll confirm your order by email.";
+      } else if (isHubtel) {
+        disclaimerEl.textContent = "Secure checkout via Hubtel (Mobile Money, cards, GHQR). We'll confirm delivery details after payment.";
+      } else {
+        disclaimerEl.textContent = "Secure checkout via Paystack. We'll confirm delivery details after payment.";
+      }
+    }
+  }
 
   fetch('api/get_settings')
     .then((r) => r.json())
@@ -133,6 +159,10 @@ function initPreorderForm() {
         amountPerGame = parseFloat(s.price_ghs);
         if (pricePerEl) pricePerEl.textContent = amountPerGame.toFixed(0) + ' GHS per game';
         updateQuantity(currentQty);
+      }
+      if (s.payment_mode) {
+        paymentMode = s.payment_mode;
+        applyPaymentModeUI();
       }
     })
     .catch(() => {});
@@ -315,7 +345,7 @@ function initPreorderForm() {
 
     const btn = form.querySelector('#preorder-submit');
     const originalText = btn.textContent;
-    btn.textContent = 'Creating order…';
+    btn.textContent = paymentMode === 'pay_on_delivery' ? 'Placing order…' : 'Creating order…';
     btn.disabled = true;
 
     const formData = new FormData(form);
@@ -334,6 +364,17 @@ function initPreorderForm() {
           showError(data.errors ? data.errors.join(' ') : data.error || 'Something went wrong.');
           return;
         }
+
+        if (data.payment_mode === 'pay_on_delivery' && data.redirect) {
+          window.location.href = data.redirect;
+          return;
+        }
+
+        if (data.payment_mode === 'hubtel' && data.checkout_url) {
+          window.location.href = data.checkout_url;
+          return;
+        }
+
         btn.textContent = 'Opening payment…';
         const ref = 'HGAY-' + data.order_id + '-' + Math.random().toString(36).replace(/[^a-z0-9]/gi, '').slice(0, 8);
         const openPaystack = (PaystackPop) => {

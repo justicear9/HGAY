@@ -671,6 +671,7 @@
 }
 
 .status.paid { background: rgba(40, 167, 69, 0.3); color: #5cb85c; }
+.status.confirmed { background: rgba(0, 107, 63, 0.25); color: #3dd68c; }
 .status.pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
 .status.failed { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
 

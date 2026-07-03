@@ -59,3 +59,7 @@ CREATE TABLE IF NOT EXISTS gallery_items (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_active_sort (is_active, sort_order)
 ) ENGINE=InnoDB;
+
+-- Pay on delivery orders (run once on live DB if not already applied)
+ALTER TABLE orders
+  MODIFY COLUMN status ENUM('pending', 'paid', 'failed', 'confirmed') NOT NULL DEFAULT 'pending';

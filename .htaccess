@@ -15,6 +15,7 @@
   RewriteRule ^fact-check/?$ fact-check.php [L]
   RewriteRule ^events/?$ events.php [L]
   RewriteRule ^verify/?$ verify.php [L,QSA]
+  RewriteRule ^order-confirmed/?$ order-confirmed.php [L,QSA]
   RewriteRule ^create_order/?$ create_order.php [L]
 
   RewriteRule ^api/([a-z0-9_-]+)/?$ api/$1.php [L,QSA]

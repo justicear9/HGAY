@@ -1,7 +1,6 @@
 <?php
 /**
- * Create a pending order and return order_id for Paystack metadata.
- * Validates and sanitizes all inputs; formats phone with country code.
+ * Create an order. Hubtel/Paystack: pending + checkout. Pay on delivery: confirmed immediately.
  */
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
@@ -9,10 +8,13 @@ header('X-Robots-Tag: noindex, nofollow');
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/lib/settings.php';
+require_once __DIR__ . '/lib/payment.php';
+require_once __DIR__ . '/lib/paths.php';
 
 $countries = require __DIR__ . '/config/countries.php';
 $dialCodes = $countries['dial_codes'];
 $phoneLengths = $countries['phone_lengths'] ?? [];
+$paymentMode = hgay_payment_mode();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   http_response_code(405);
@@ -76,6 +78,8 @@ if (!empty($errors)) {
   exit;
 }
 
+$initialStatus = $paymentMode === 'pay_on_delivery' ? 'confirmed' : 'pending';
+
 try {
   $stmt = $pdo->prepare("
     INSERT INTO orders (
@@ -83,7 +87,7 @@ try {
       delivery_country, delivery_region, delivery_address, delivery_postcode, status
     ) VALUES (
       :name, :email, :phone_country, :phone_full, :quantity, :amount_pesewas, 'GHS',
-      :delivery_country, :delivery_region, :delivery_address, :delivery_postcode, 'pending'
+      :delivery_country, :delivery_region, :delivery_address, :delivery_postcode, :status
     )
   ");
   $stmt->execute([
@@ -97,11 +101,93 @@ try {
     ':delivery_region' => $raw['delivery_region'],
     ':delivery_address' => $raw['delivery_address'],
     ':delivery_postcode' => $raw['delivery_postcode'] === '' ? null : $raw['delivery_postcode'],
+    ':status' => $initialStatus,
   ]);
   $orderId = (int) $pdo->lastInsertId();
-  echo json_encode(['success' => true, 'order_id' => $orderId, 'amount_pesewas' => $amountPesewas, 'email' => $raw['email']]);
+
+  if ($paymentMode === 'pay_on_delivery') {
+    require_once __DIR__ . '/lib/order-mail.php';
+    $mailResult = hgay_send_order_confirmation_email([
+      'name' => $raw['name'],
+      'email' => $raw['email'],
+      'quantity' => $raw['quantity'],
+      'amount_pesewas' => $amountPesewas,
+      'currency' => 'GHS',
+      'paystack_reference' => '',
+      'payment_mode' => 'pay_on_delivery',
+      'order_id' => $orderId,
+    ]);
+
+    $redirect = site_url('order-confirmed?order=' . $orderId);
+    if (!$mailResult['ok']) {
+      $redirect .= '&email=failed';
+    }
+
+    echo json_encode([
+      'success' => true,
+      'order_id' => $orderId,
+      'payment_mode' => 'pay_on_delivery',
+      'email_sent' => $mailResult['ok'],
+      'redirect' => $redirect,
+    ]);
+    exit;
+  }
+
+  if ($paymentMode === 'hubtel') {
+    require_once __DIR__ . '/lib/hubtel.php';
+    if (!hgay_hubtel_is_configured()) {
+      http_response_code(503);
+      echo json_encode([
+        'success' => false,
+        'error' => 'Online payment is not configured yet. Please try again later or contact us.',
+      ]);
+      exit;
+    }
+
+    $orderRow = [
+      'id' => $orderId,
+      'name' => $raw['name'],
+      'email' => $raw['email'],
+      'phone_full' => $phoneFull,
+      'quantity' => $raw['quantity'],
+      'amount_pesewas' => $amountPesewas,
+    ];
+    $checkout = hgay_hubtel_initiate_checkout($orderRow);
+    if (!$checkout['ok']) {
+      error_log('create_order hubtel: ' . $checkout['error']);
+      http_response_code(502);
+      echo json_encode([
+        'success' => false,
+        'error' => 'Could not start payment. Please try again.',
+      ]);
+      exit;
+    }
+
+    $stmt = $pdo->prepare('UPDATE orders SET paystack_reference = :ref, updated_at = NOW() WHERE id = :id');
+    $stmt->execute([':ref' => $checkout['invoice_id'], ':id' => $orderId]);
+
+    echo json_encode([
+      'success' => true,
+      'order_id' => $orderId,
+      'payment_mode' => 'hubtel',
+      'checkout_url' => $checkout['checkout_url'],
+    ]);
+    exit;
+  }
+
+  echo json_encode([
+    'success' => true,
+    'order_id' => $orderId,
+    'amount_pesewas' => $amountPesewas,
+    'email' => $raw['email'],
+    'payment_mode' => 'paystack',
+  ]);
 } catch (PDOException $e) {
   error_log('create_order: ' . $e->getMessage());
+  $msg = 'Could not create order. Please try again.';
+  if (str_contains($e->getMessage(), 'confirmed') || str_contains($e->getMessage(), 'Data truncated')) {
+    $msg = 'Orders database needs an update. Run the latest schema-update.sql on the orders table (add confirmed status).';
+  }
   http_response_code(500);
-  echo json_encode(['success' => false, 'error' => 'Could not create order. Please try again.']);
+  echo json_encode(['success' => false, 'error' => $msg]);
 }

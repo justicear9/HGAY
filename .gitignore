@@ -3,6 +3,8 @@ paystack_config.php
 config/mail.php
 config/database.php
 config/site.php
+config/payment.php
+config/hubtel.php
 
 # OS / editor
 .DS_Store

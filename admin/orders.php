@@ -2,8 +2,15 @@
 require_once 'auth.php';
 require_once dirname(__DIR__) . '/config/database.php';
 
-$statusFilter = isset($_GET['status']) && in_array($_GET['status'], ['pending', 'paid', 'failed'], true)
+$statusFilter = isset($_GET['status']) && in_array($_GET['status'], ['pending', 'paid', 'failed', 'confirmed'], true)
   ? $_GET['status'] : '';
+
+$statusLabels = [
+  'pending' => 'Pending payment',
+  'paid' => 'Paid online',
+  'failed' => 'Failed',
+  'confirmed' => 'Pay on delivery',
+];
 
 $pdo = dbConnection();
 $sql = "SELECT id, name, email, phone_full, quantity, amount_pesewas, currency,
@@ -35,7 +42,8 @@ require_once 'includes/layout_start.php';
         <select id="filter-status" name="status" onchange="this.form.submit()">
           <option value="">All</option>
           <option value="pending"<?php echo $statusFilter === 'pending' ? ' selected' : ''; ?>>Pending</option>
-          <option value="paid"<?php echo $statusFilter === 'paid' ? ' selected' : ''; ?>>Paid</option>
+          <option value="paid"<?php echo $statusFilter === 'paid' ? ' selected' : ''; ?>>Paid online</option>
+          <option value="confirmed"<?php echo $statusFilter === 'confirmed' ? ' selected' : ''; ?>>Pay on delivery</option>
           <option value="failed"<?php echo $statusFilter === 'failed' ? ' selected' : ''; ?>>Failed</option>
         </select>
       </form>
@@ -75,8 +83,16 @@ require_once 'includes/layout_start.php';
                   if (mb_strlen($o['delivery_address']) > 80) echo '…';
                   ?>
                 </td>
-                <td><span class="status <?php echo htmlspecialchars($o['status']); ?>"><?php echo htmlspecialchars($o['status']); ?></span></td>
-                <td style="font-size:0.8rem"><?php echo $o['paystack_reference'] ? htmlspecialchars($o['paystack_reference']) : '—'; ?></td>
+                <td><span class="status <?php echo htmlspecialchars($o['status']); ?>"><?php echo htmlspecialchars($statusLabels[$o['status']] ?? $o['status']); ?></span></td>
+                <td style="font-size:0.8rem"><?php
+                  if ($o['paystack_reference']) {
+                    echo htmlspecialchars($o['paystack_reference']);
+                  } elseif ($o['status'] === 'confirmed') {
+                    echo 'Pay on delivery';
+                  } else {
+                    echo '—';
+                  }
+                ?></td>
               </tr>
               <?php endforeach; ?>
               <?php if (empty($orders)): ?>

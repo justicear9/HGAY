@@ -51,6 +51,21 @@ function hgay_absolute_url(string $path = ''): string
     return $origin . '/' . hgay_asset_path($path);
 }
 
+/**
+ * Absolute URLs for HTML emails — always HTTPS production when canonical_origin is unset (CLI/cron).
+ */
+function hgay_email_absolute_url(string $path = ''): string
+{
+    $override = trim((string) (hgay_site_config()['canonical_origin'] ?? ''));
+    $origin = $override !== '' ? rtrim($override, '/') : 'https://howghanaianareyou.com';
+    $path = ltrim($path, '/');
+    if ($path === '') {
+        return $origin . '/';
+    }
+
+    return $origin . '/' . hgay_asset_path($path);
+}
+
 /** @return array<string, mixed> */
 function hgay_seo_page(string $pageKey): array
 {
