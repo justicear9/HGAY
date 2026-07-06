@@ -15,6 +15,9 @@
   RewriteRule ^fact-check/?$ fact-check.php [L]
   RewriteRule ^events/?$ events.php [L]
   RewriteRule ^verify/?$ verify.php [L,QSA]
+
+  # Hubtel return URLs sent before query-string fix (verify%3Forder%3D123)
+  RewriteRule ^verify%3Forder%3D([0-9]+)/?$ verify?order=$1 [R=302,L,QSA,NE]
   RewriteRule ^order-confirmed/?$ order-confirmed.php [L,QSA]
   RewriteRule ^create_order/?$ create_order.php [L]
 

@@ -223,7 +223,7 @@ function hgay_hubtel_initiate_checkout(array $order): array
         'description' => 'How Ghanaian Are You — ' . $quantity . ' game' . ($quantity > 1 ? 's' : ''),
         'callbackUrl' => hgay_email_absolute_url('api/hubtel_callback'),
         'returnUrl' => hgay_email_absolute_url('verify?order=' . $orderId),
-        'cancellationUrl' => rtrim(hgay_email_absolute_url(''), '/') . '/#place-order',
+        'cancellationUrl' => hgay_email_absolute_url('/#place-order'),
         'merchantAccountNumber' => $creds['merchant_account'],
         'clientReference' => $clientReference,
         'payeeName' => $name,

@@ -16,6 +16,18 @@ require_once __DIR__ . '/lib/seo.php';
 require_once __DIR__ . '/lib/payment.php';
 hgay_seo_send_noindex();
 
+// Fallback if host does not rewrite encoded verify return paths from Hubtel.
+if ($orderId < 1 && isset($_SERVER['REQUEST_URI'])) {
+  if (preg_match('#/verify%3Forder%3D(\d+)#i', (string) $_SERVER['REQUEST_URI'], $m)) {
+    $orderId = (int) $m[1];
+    $qs = [];
+    parse_str((string) ($_SERVER['QUERY_STRING'] ?? ''), $qs);
+    $qs['order'] = (string) $orderId;
+    header('Location: ' . hgay_email_absolute_url('verify') . '?' . http_build_query($qs), true, 302);
+    exit;
+  }
+}
+
 try {
   require_once __DIR__ . '/config/database.php';
 

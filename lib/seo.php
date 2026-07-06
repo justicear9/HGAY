@@ -43,12 +43,7 @@ function hgay_canonical_origin(): string
 function hgay_absolute_url(string $path = ''): string
 {
     $origin = hgay_canonical_origin();
-    $path = ltrim($path, '/');
-    if ($path === '') {
-        return $origin . '/';
-    }
-
-    return $origin . '/' . hgay_asset_path($path);
+    return hgay_join_absolute_url($origin, $path);
 }
 
 /**
@@ -58,12 +53,29 @@ function hgay_email_absolute_url(string $path = ''): string
 {
     $override = trim((string) (hgay_site_config()['canonical_origin'] ?? ''));
     $origin = $override !== '' ? rtrim($override, '/') : 'https://howghanaianareyou.com';
-    $path = ltrim($path, '/');
-    if ($path === '') {
-        return $origin . '/';
+
+    return hgay_join_absolute_url($origin, $path);
+}
+
+function hgay_join_absolute_url(string $origin, string $path): string
+{
+    $hash = '';
+    $query = '';
+    if (($i = strpos($path, '#')) !== false) {
+        $hash = substr($path, $i);
+        $path = substr($path, 0, $i);
+    }
+    if (($i = strpos($path, '?')) !== false) {
+        $query = substr($path, $i);
+        $path = substr($path, 0, $i);
     }
 
-    return $origin . '/' . hgay_asset_path($path);
+    $path = ltrim($path, '/');
+    if ($path === '') {
+        return rtrim($origin, '/') . '/' . ltrim($query, '') . $hash;
+    }
+
+    return rtrim($origin, '/') . '/' . hgay_asset_path($path) . $query . $hash;
 }
 
 /** @return array<string, mixed> */
