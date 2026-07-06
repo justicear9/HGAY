@@ -5,6 +5,7 @@
 require_once dirname(__DIR__) . '/lib/session.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/paths.php';
+require_once dirname(__DIR__) . '/lib/security.php';
 
 hgay_session_start();
 
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hash = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $pdo->prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)');
     $stmt->execute([$username, $hash]);
+    session_regenerate_id(true);
     $_SESSION['admin_user_id'] = (int) $pdo->lastInsertId();
     $_SESSION['admin_username'] = $username;
     header('Location: ' . admin_url('dashboard'), true, 302);

@@ -6,28 +6,34 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/paths.php';
 require_once __DIR__ . '/lib/seo.php';
+require_once __DIR__ . '/lib/security.php';
 require_once __DIR__ . '/config/database.php';
 
 hgay_seo_send_noindex();
+hgay_security_send_headers();
 
 $orderId = isset($_GET['order']) ? (int) $_GET['order'] : 0;
+$accessToken = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
 $emailFailed = isset($_GET['email']) && $_GET['email'] === 'failed';
 $order = null;
 $error = null;
 
-if ($orderId < 1) {
+if ($orderId < 1 || $accessToken === '') {
     $error = 'No order specified.';
 } else {
     try {
         $pdo = dbConnection();
         $stmt = $pdo->prepare(
-            "SELECT id, name, quantity, amount_pesewas, currency, status FROM orders WHERE id = ? LIMIT 1"
+            "SELECT id, name, email, quantity, amount_pesewas, currency, status FROM orders WHERE id = ? LIMIT 1"
         );
         $stmt->execute([$orderId]);
-        $order = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        if (!$order || !in_array($order['status'], ['confirmed', 'paid'], true)) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if (!$row || !hgay_order_token_valid($orderId, (string) ($row['email'] ?? ''), $accessToken)) {
             $error = 'We could not find that order.';
-            $order = null;
+        } elseif (!in_array($row['status'], ['confirmed', 'paid'], true)) {
+            $error = 'We could not find that order.';
+        } else {
+            $order = $row;
         }
     } catch (Throwable $e) {
         error_log('order-confirmed.php: ' . $e->getMessage());

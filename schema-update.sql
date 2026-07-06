@@ -63,3 +63,6 @@ CREATE TABLE IF NOT EXISTS gallery_items (
 -- Pay on delivery orders (run once on live DB if not already applied)
 ALTER TABLE orders
   MODIFY COLUMN status ENUM('pending', 'paid', 'failed', 'confirmed') NOT NULL DEFAULT 'pending';
+
+-- Optional: set app_secret in config/site.php for order access tokens (see config/site.example.php).
+

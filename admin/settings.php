@@ -1,5 +1,6 @@
 <?php
 require_once 'auth.php';
+require_once dirname(__DIR__) . '/lib/security.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/settings.php';
 require_once dirname(__DIR__) . '/lib/order-mail.php';
@@ -9,7 +10,10 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (isset($_POST['send_test_email'])) {
+  $csrf = (string) ($_POST['csrf_token'] ?? '');
+  if (!hgay_csrf_verify($csrf)) {
+    $error = 'Session expired. Refresh the page and try again.';
+  } elseif (isset($_POST['send_test_email'])) {
     $testTo = trim((string) ($_POST['test_email'] ?? ''));
     if (!filter_var($testTo, FILTER_VALIDATE_EMAIL)) {
       $error = 'Enter a valid email address for the test.';
@@ -50,6 +54,7 @@ require_once 'includes/layout_start.php';
       <div class="admin-card">
         <h2>Product price</h2>
         <form method="post" class="admin-form" style="max-width:400px">
+          <?php echo hgay_csrf_field(); ?>
           <div class="form-row">
             <label for="product_price_ghs">Price per game (GHS)</label>
             <input type="number" id="product_price_ghs" name="product_price_ghs" min="1" max="99999" step="0.01" value="<?php echo htmlspecialchars((string) $priceGhs); ?>" required>
@@ -69,6 +74,7 @@ require_once 'includes/layout_start.php';
         </div>
         <?php endif; ?>
         <form method="post" class="admin-form" style="max-width:420px">
+          <?php echo hgay_csrf_field(); ?>
           <div class="form-row">
             <label for="test_email">Send test confirmation email</label>
             <input type="email" id="test_email" name="test_email" placeholder="you@example.com" required>

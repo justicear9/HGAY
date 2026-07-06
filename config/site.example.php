@@ -9,4 +9,6 @@
  */
 return [
     'canonical_origin' => '',
+    // Random 32+ char secret for order access tokens. Generate: bin2hex(random_bytes(32))
+    'app_secret' => '',
 ];

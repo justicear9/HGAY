@@ -5,6 +5,7 @@
 require_once dirname(__DIR__) . '/lib/session.php';
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/lib/paths.php';
+require_once dirname(__DIR__) . '/lib/security.php';
 
 hgay_session_start();
 
@@ -25,6 +26,12 @@ try {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $csrf = (string) ($_POST['csrf_token'] ?? '');
+  if (!hgay_csrf_verify($csrf)) {
+    $error = 'Session expired. Refresh the page and try again.';
+  } elseif (!hgay_rate_limit('admin_login', 10, 900)) {
+    $error = 'Too many login attempts. Please wait and try again.';
+  } else {
   $username = trim((string) ($_POST['username'] ?? ''));
   $password = (string) ($_POST['password'] ?? '');
   if ($username === '' || $password === '') {
@@ -34,12 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username]);
     $user = $stmt->fetch();
     if ($user && password_verify($password, $user['password_hash'])) {
+      session_regenerate_id(true);
       $_SESSION['admin_user_id'] = (int) $user['id'];
       $_SESSION['admin_username'] = $username;
       header('Location: ' . admin_url('dashboard'), true, 302);
       exit;
     }
     $error = 'Invalid username or password.';
+  }
   }
 }
 
@@ -80,6 +89,7 @@ $faviconSrc = '../HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png';
         <?php endif; ?>
 
         <form method="post" class="admin-auth-form" id="login-form">
+          <?php echo hgay_csrf_field(); ?>
           <div class="admin-auth-field">
             <label for="username" class="admin-auth-label">Username</label>
             <input type="text" id="username" name="username" class="admin-auth-input" required autocomplete="username" placeholder="Your username">

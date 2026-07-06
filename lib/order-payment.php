@@ -29,12 +29,15 @@ function hgay_order_mark_paid(PDO $pdo, int $orderId, string $paymentRef, ?float
     }
 
     $expectedPesewas = (int) $existing['amount_pesewas'];
-    if ($amountGhs !== null) {
-        $paidPesewas = (int) round($amountGhs * 100);
-        if ($paidPesewas > 0 && $paidPesewas !== $expectedPesewas) {
-            error_log('hgay_order_mark_paid: amount mismatch for order ' . $orderId);
-            return ['updated' => false, 'order' => null, 'email_sent' => false];
-        }
+    if ($amountGhs === null) {
+        error_log('hgay_order_mark_paid: amount required for order ' . $orderId);
+        return ['updated' => false, 'order' => null, 'email_sent' => false];
+    }
+
+    $paidPesewas = (int) round($amountGhs * 100);
+    if ($paidPesewas < 1 || $paidPesewas !== $expectedPesewas) {
+        error_log('hgay_order_mark_paid: amount mismatch for order ' . $orderId);
+        return ['updated' => false, 'order' => null, 'email_sent' => false];
     }
 
     $stmt = $pdo->prepare("

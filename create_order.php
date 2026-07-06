@@ -4,12 +4,15 @@
  */
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Robots-Tag: noindex, nofollow');
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/lib/settings.php';
 require_once __DIR__ . '/lib/payment.php';
 require_once __DIR__ . '/lib/paths.php';
+require_once __DIR__ . '/lib/security.php';
 
 $countries = require __DIR__ . '/config/countries.php';
 $dialCodes = $countries['dial_codes'];
@@ -19,6 +22,25 @@ $paymentMode = hgay_payment_mode();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   http_response_code(405);
   echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+  exit;
+}
+
+if (!hgay_same_origin_post()) {
+  http_response_code(403);
+  echo json_encode(['success' => false, 'error' => 'Invalid request origin.']);
+  exit;
+}
+
+$csrfToken = isset($_POST['csrf_token']) ? (string) $_POST['csrf_token'] : '';
+if (!hgay_csrf_verify($csrfToken)) {
+  http_response_code(403);
+  echo json_encode(['success' => false, 'error' => 'Session expired. Please refresh the page and try again.']);
+  exit;
+}
+
+if (!hgay_rate_limit('create_order', 8, 3600)) {
+  http_response_code(429);
+  echo json_encode(['success' => false, 'error' => 'Too many orders from your network. Please try again later.']);
   exit;
 }
 
@@ -104,6 +126,7 @@ try {
     ':status' => $initialStatus,
   ]);
   $orderId = (int) $pdo->lastInsertId();
+  $accessToken = hgay_order_access_token($orderId, $raw['email']);
 
   if ($paymentMode === 'pay_on_delivery') {
     require_once __DIR__ . '/lib/order-mail.php';
@@ -118,7 +141,7 @@ try {
       'order_id' => $orderId,
     ]);
 
-    $redirect = site_url('order-confirmed?order=' . $orderId);
+    $redirect = site_url('order-confirmed?order=' . $orderId . '&token=' . rawurlencode($accessToken));
     if (!$mailResult['ok']) {
       $redirect .= '&email=failed';
     }

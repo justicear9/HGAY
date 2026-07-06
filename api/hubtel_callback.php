@@ -1,6 +1,7 @@
 <?php
 /**
  * Hubtel payment webhook — called when a checkout completes.
+ * Payment is only confirmed via Hubtel status API (never trust body alone).
  */
 declare(strict_types=1);
 
@@ -27,13 +28,14 @@ if (!is_array($payload)) {
 try {
     $pdo = dbConnection();
     $result = hgay_hubtel_handle_callback($pdo, $payload);
+    if (!$result['ok']) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => 'Could not process webhook']);
+        exit;
+    }
+
     http_response_code(200);
-    echo json_encode([
-        'success' => true,
-        'message' => 'Webhook received',
-        'order_id' => $result['order_id'],
-        'updated' => $result['updated'],
-    ]);
+    echo json_encode(['success' => true, 'message' => 'OK']);
 } catch (Throwable $e) {
     error_log('hubtel_callback: ' . $e->getMessage());
     http_response_code(500);

@@ -6,15 +6,19 @@ declare(strict_types=1);
 
 $reference = isset($_GET['reference']) ? trim((string) $_GET['reference']) : '';
 $orderId = isset($_GET['order']) ? (int) $_GET['order'] : 0;
+$accessToken = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
 $verified = false;
 $error = 'No transaction reference provided.';
 $amountFormatted = '0.00 GHS';
 $displayReference = $reference;
+$showDetails = false;
 
 require_once __DIR__ . '/lib/paths.php';
 require_once __DIR__ . '/lib/seo.php';
 require_once __DIR__ . '/lib/payment.php';
+require_once __DIR__ . '/lib/security.php';
 hgay_seo_send_noindex();
+hgay_security_send_headers();
 
 // Fallback if host does not rewrite encoded verify return paths from Hubtel.
 if ($orderId < 1 && isset($_SERVER['REQUEST_URI'])) {
@@ -33,47 +37,49 @@ try {
 
   if ($orderId > 0) {
     $pdo = dbConnection();
-    $stmt = $pdo->prepare('SELECT id, status, amount_pesewas, currency, paystack_reference FROM orders WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, email, status, amount_pesewas, currency, paystack_reference FROM orders WHERE id = ?');
     $stmt->execute([$orderId]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$order) {
       $error = 'Order not found.';
-    } elseif (($order['status'] ?? '') === 'paid') {
-      $verified = true;
-      $displayReference = (string) ($order['paystack_reference'] ?? '');
-      $amountFormatted = number_format(((int) $order['amount_pesewas']) / 100, 2) . ' ' . ($order['currency'] ?? 'GHS');
     } else {
-      require_once __DIR__ . '/lib/hubtel.php';
-      require_once __DIR__ . '/lib/order-payment.php';
+      $hasToken = hgay_order_token_valid($orderId, (string) ($order['email'] ?? ''), $accessToken);
+      $showDetails = $hasToken;
 
-      $invoiceId = trim((string) ($order['paystack_reference'] ?? ''));
-      if ($invoiceId === '') {
-        $invoiceId = hgay_hubtel_client_reference($orderId);
-      }
-
-      $statusResult = hgay_hubtel_transaction_status($invoiceId);
-      $status = strtolower($statusResult['status']);
-      if ($status === 'completed' || $status === 'success') {
-        $transactionId = trim((string) (
-          $statusResult['body']['checkoutId']
-          ?? $statusResult['body']['CheckoutId']
-          ?? $statusResult['body']['hubtelTransactionId']
-          ?? $invoiceId
-        ));
-        $amountGhs = isset($statusResult['body']['amount']) ? (float) $statusResult['body']['amount'] : (isset($statusResult['body']['Amount']) ? (float) $statusResult['body']['Amount'] : null);
-        $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
-        if ($mark['updated'] || ($order['status'] ?? '') === 'paid') {
-          $verified = true;
-          $displayReference = $transactionId;
+      if (($order['status'] ?? '') === 'paid') {
+        $verified = true;
+        if ($hasToken) {
+          $displayReference = (string) ($order['paystack_reference'] ?? '');
           $amountFormatted = number_format(((int) $order['amount_pesewas']) / 100, 2) . ' ' . ($order['currency'] ?? 'GHS');
         } else {
-          $error = 'Payment is still processing. If you completed payment, we will confirm shortly by email.';
+          $error = '';
         }
-      } elseif ($status === 'pending') {
-        $error = 'Payment is still processing. Please wait a moment and refresh this page.';
       } else {
-        $error = 'Payment was not completed. You can try placing your order again.';
+        require_once __DIR__ . '/lib/hubtel.php';
+
+        $invoiceId = trim((string) ($order['paystack_reference'] ?? ''));
+        if ($invoiceId === '') {
+          $invoiceId = hgay_hubtel_client_reference($orderId);
+        }
+
+        $confirm = hgay_hubtel_confirm_paid_order($pdo, $orderId, $invoiceId);
+        if ($confirm['updated']) {
+          $verified = true;
+          $stmt = $pdo->prepare('SELECT paystack_reference, amount_pesewas, currency FROM orders WHERE id = ?');
+          $stmt->execute([$orderId]);
+          $fresh = $stmt->fetch(PDO::FETCH_ASSOC);
+          if ($hasToken && is_array($fresh)) {
+            $displayReference = (string) ($fresh['paystack_reference'] ?? '');
+            $amountFormatted = number_format(((int) $fresh['amount_pesewas']) / 100, 2) . ' ' . ($fresh['currency'] ?? 'GHS');
+          } else {
+            $error = '';
+          }
+        } elseif ($confirm['ok']) {
+          $error = 'Payment is still processing. If you completed payment, we will confirm shortly by email.';
+        } else {
+          $error = 'Payment was not completed. You can try placing your order again.';
+        }
       }
     }
   } elseif ($reference !== '' && hgay_payment_mode_is_paystack() && is_file(__DIR__ . '/paystack_config.php')) {
@@ -97,20 +103,17 @@ try {
     $error = $verified ? '' : (isset($body['message']) ? (string) $body['message'] : 'Verification failed.');
 
     if ($verified && is_array($data)) {
-      $paystackOrderId = null;
-      $metadata = isset($data['metadata']) && is_array($data['metadata']) ? $data['metadata'] : [];
-      $customFields = isset($metadata['custom_fields']) && is_array($metadata['custom_fields']) ? $metadata['custom_fields'] : [];
-      foreach ($customFields as $f) {
-        if (isset($f['variable_name']) && $f['variable_name'] === 'order_id' && isset($f['value'])) {
-          $paystackOrderId = (int) $f['value'];
-          break;
-        }
-      }
-      if ($paystackOrderId) {
-        $pdo = dbConnection();
+      $pdo = dbConnection();
+      $stmt = $pdo->prepare('SELECT id, amount_pesewas FROM orders WHERE paystack_reference = ? AND status = ? LIMIT 1');
+      $stmt->execute([$reference, 'pending']);
+      $orderRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+      if (is_array($orderRow)) {
+        $paystackOrderId = (int) $orderRow['id'];
         $amountPaid = (int) $data['amount'];
         $mark = hgay_order_mark_paid($pdo, $paystackOrderId, $reference, $amountPaid / 100);
         $verified = $mark['updated'] || $verified;
+        $showDetails = true;
       }
 
       $amount = (int) $data['amount'];
@@ -155,9 +158,13 @@ try {
     <div class="verify-box">
       <?php if ($verified): ?>
         <h1 class="section-title">Thank you!</h1>
+        <?php if ($showDetails): ?>
         <p>Your order payment of <strong><?php echo htmlspecialchars($amountFormatted); ?></strong> was successful. We'll be in touch with delivery details.</p>
         <?php if ($displayReference !== ''): ?>
         <p><small>Reference: <?php echo htmlspecialchars($displayReference); ?></small></p>
+        <?php endif; ?>
+        <?php else: ?>
+        <p>Your payment was successful. We'll be in touch with delivery details by email.</p>
         <?php endif; ?>
         <a href="<?php echo htmlspecialchars(site_url()); ?>" class="btn btn-primary">Back to home</a>
       <?php else: ?>

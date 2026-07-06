@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/paths.php';
 require_once __DIR__ . '/seo.php';
+require_once __DIR__ . '/security.php';
 
 const HGAY_HUBTEL_CHECKOUT_API = 'https://payproxyapi.hubtel.com';
 const HGAY_HUBTEL_STATUS_API = 'https://api-txnstatus.hubtel.com';
@@ -71,6 +72,19 @@ function hgay_hubtel_basic_auth_header(): string
 function hgay_hubtel_client_reference(int $orderId): string
 {
     return 'HGAY-' . $orderId;
+}
+
+/**
+ * Access token for verify return URL (requires lib/security.php).
+ *
+ * @param array<string, mixed> $order
+ */
+function hgay_hubtel_order_return_token(array $order): string
+{
+    $orderId = (int) ($order['id'] ?? $order['order_id'] ?? 0);
+    $email = trim((string) ($order['email'] ?? ''));
+
+    return hgay_order_access_token($orderId, $email);
 }
 
 function hgay_hubtel_order_id_from_reference(string $reference): ?int
@@ -222,7 +236,9 @@ function hgay_hubtel_initiate_checkout(array $order): array
         'totalAmount' => $amountGhs,
         'description' => 'How Ghanaian Are You — ' . $quantity . ' game' . ($quantity > 1 ? 's' : ''),
         'callbackUrl' => hgay_email_absolute_url('api/hubtel_callback'),
-        'returnUrl' => hgay_email_absolute_url('verify?order=' . $orderId),
+        'returnUrl' => hgay_email_absolute_url(
+            'verify?order=' . $orderId . '&token=' . rawurlencode(hgay_hubtel_order_return_token($order))
+        ),
         'cancellationUrl' => hgay_email_absolute_url('/#place-order'),
         'merchantAccountNumber' => $creds['merchant_account'],
         'clientReference' => $clientReference,
@@ -293,27 +309,87 @@ function hgay_hubtel_transaction_status(string $clientReference): array
     ];
 }
 
-/**
- * @param array<string, mixed> $payload
- */
-function hgay_hubtel_callback_is_success(array $payload): bool
+function hgay_hubtel_status_is_paid(string $status): bool
 {
-    $data = hgay_hubtel_response_data($payload);
-    $status = strtolower(trim((string) (
-        $data['status']
-        ?? $data['Status']
-        ?? $payload['status']
-        ?? $payload['Status']
-        ?? ''
-    )));
+    $status = strtolower(trim($status));
 
-    if ($status === 'success' || $status === 'completed') {
-        return true;
+    return $status === 'success' || $status === 'completed';
+}
+
+/**
+ * Extract paid amount (GHS) from Hubtel status/callback payload.
+ */
+function hgay_hubtel_amount_ghs_from_body(?array $body): ?float
+{
+    if ($body === null || $body === []) {
+        return null;
     }
 
-    $code = hgay_hubtel_response_code($payload);
+    if (isset($body['amount'])) {
+        return (float) $body['amount'];
+    }
+    if (isset($body['Amount'])) {
+        return (float) $body['Amount'];
+    }
+    if (isset($body['totalAmount'])) {
+        return (float) $body['totalAmount'];
+    }
+    if (isset($body['TotalAmount'])) {
+        return (float) $body['TotalAmount'];
+    }
 
-    return $code === '0000' && $status === '';
+    return null;
+}
+
+/**
+ * Confirm payment with Hubtel status API before marking an order paid.
+ *
+ * @return array{ok: bool, updated: bool, error: string}
+ */
+function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientReference): array
+{
+    require_once __DIR__ . '/order-payment.php';
+
+    $stmt = $pdo->prepare('SELECT id, status, amount_pesewas FROM orders WHERE id = ? LIMIT 1');
+    $stmt->execute([$orderId]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!is_array($order)) {
+        return ['ok' => false, 'updated' => false, 'error' => 'Order not found.'];
+    }
+
+    if (($order['status'] ?? '') === 'paid') {
+        return ['ok' => true, 'updated' => false, 'error' => ''];
+    }
+
+    if (($order['status'] ?? '') !== 'pending') {
+        return ['ok' => false, 'updated' => false, 'error' => 'Order is not awaiting payment.'];
+    }
+
+    $statusResult = hgay_hubtel_transaction_status($clientReference);
+    if (!hgay_hubtel_status_is_paid($statusResult['status'])) {
+        return ['ok' => true, 'updated' => false, 'error' => ''];
+    }
+
+    $body = is_array($statusResult['body']) ? $statusResult['body'] : [];
+    $transactionId = trim((string) (
+        $body['checkoutId']
+        ?? $body['CheckoutId']
+        ?? $body['hubtelTransactionId']
+        ?? $body['HubtelTransactionId']
+        ?? $clientReference
+    ));
+
+    $amountGhs = hgay_hubtel_amount_ghs_from_body($body);
+    if ($amountGhs === null) {
+        $amountGhs = ((int) $order['amount_pesewas']) / 100;
+    }
+
+    $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
+    if (!$mark['updated'] && ($order['status'] ?? '') !== 'paid') {
+        return ['ok' => false, 'updated' => false, 'error' => 'Payment could not be confirmed.'];
+    }
+
+    return ['ok' => true, 'updated' => $mark['updated'], 'error' => ''];
 }
 
 /**
@@ -322,8 +398,6 @@ function hgay_hubtel_callback_is_success(array $payload): bool
  */
 function hgay_hubtel_handle_callback(PDO $pdo, array $payload): array
 {
-    require_once __DIR__ . '/order-payment.php';
-
     $data = hgay_hubtel_response_data($payload);
     $clientReference = trim((string) (
         $data['clientReference']
@@ -338,24 +412,12 @@ function hgay_hubtel_handle_callback(PDO $pdo, array $payload): array
         return ['ok' => false, 'order_id' => 0, 'updated' => false, 'error' => 'Unknown client reference.'];
     }
 
-    if (!hgay_hubtel_callback_is_success($payload)) {
-        return ['ok' => true, 'order_id' => $orderId, 'updated' => false, 'error' => ''];
-    }
-
-    $transactionId = trim((string) (
-        $data['checkoutId']
-        ?? $data['CheckoutId']
-        ?? $data['hubtelTransactionId']
-        ?? $data['HubtelTransactionId']
-        ?? $clientReference
-    ));
-    $amountGhs = isset($data['amount']) ? (float) $data['amount'] : (isset($data['Amount']) ? (float) $data['Amount'] : null);
-    $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
+    $confirm = hgay_hubtel_confirm_paid_order($pdo, $orderId, $clientReference);
 
     return [
-        'ok' => true,
+        'ok' => $confirm['ok'],
         'order_id' => $orderId,
-        'updated' => $mark['updated'],
-        'error' => '',
+        'updated' => $confirm['updated'],
+        'error' => $confirm['error'],
     ];
 }

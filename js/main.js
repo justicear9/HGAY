@@ -96,10 +96,7 @@ function initScrollAnimations() {
   sections.forEach((section) => observer.observe(section));
 }
 
-/** Paystack public key (safe to expose). Secret key is server-side only in paystack_config.php */
-//const PAYSTACK_PUBLIC_KEY = 'pk_live_500785115d70068dca0116c234513c6944de3ba1';
-
-//TEST KEY
+/** Paystack public key (test only; set in server config if Paystack is re-enabled). */
 const PAYSTACK_PUBLIC_KEY = 'pk_test_df46ad3b11334755c7ae647ba76186fda3af8620';
 
 /** Preorder multi-step form: countries, steps, create_order, then Paystack or pay on delivery. */
