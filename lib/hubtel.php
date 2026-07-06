@@ -1,13 +1,15 @@
 <?php
 /**
  * Hubtel Online Checkout (redirect + webhook).
+ * API: https://developers.hubtel.com/docs/business/api_documentation/payment_apis/online_checkout
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/paths.php';
 require_once __DIR__ . '/seo.php';
 
-const HGAY_HUBTEL_API_BASE = 'https://payproxyapi.hubtel.com';
+const HGAY_HUBTEL_CHECKOUT_API = 'https://payproxyapi.hubtel.com';
+const HGAY_HUBTEL_STATUS_API = 'https://api-txnstatus.hubtel.com';
 
 /** @return array<string, mixed> */
 function hgay_hubtel_config(): array
@@ -29,32 +31,51 @@ function hgay_hubtel_config(): array
     return $config;
 }
 
-function hgay_hubtel_is_configured(): bool
+/** @return array{client_id: string, client_secret: string, merchant_account: string} */
+function hgay_hubtel_credentials(): array
 {
     $cfg = hgay_hubtel_config();
+    $clientId = trim((string) ($cfg['client_id'] ?? $cfg['api_id'] ?? ''));
+    $clientSecret = trim((string) ($cfg['client_secret'] ?? $cfg['api_key'] ?? ''));
+    $merchantAccount = trim((string) (
+        $cfg['merchant_account']
+        ?? $cfg['merchant_account_number']
+        ?? $cfg['collection_account_number']
+        ?? ''
+    ));
 
-    return trim((string) ($cfg['client_id'] ?? '')) !== ''
-        && trim((string) ($cfg['client_secret'] ?? '')) !== '';
+    return [
+        'client_id' => $clientId,
+        'client_secret' => $clientSecret,
+        'merchant_account' => $merchantAccount,
+    ];
+}
+
+function hgay_hubtel_is_configured(): bool
+{
+    $creds = hgay_hubtel_credentials();
+
+    return $creds['client_id'] !== ''
+        && $creds['client_secret'] !== ''
+        && $creds['merchant_account'] !== '';
 }
 
 function hgay_hubtel_basic_auth_header(): string
 {
-    $cfg = hgay_hubtel_config();
-    $credentials = base64_encode(
-        trim((string) $cfg['client_id']) . ':' . trim((string) $cfg['client_secret'])
-    );
+    $creds = hgay_hubtel_credentials();
+    $credentials = base64_encode($creds['client_id'] . ':' . $creds['client_secret']);
 
     return 'Basic ' . $credentials;
 }
 
-function hgay_hubtel_invoice_id(int $orderId): string
+function hgay_hubtel_client_reference(int $orderId): string
 {
     return 'HGAY-' . $orderId;
 }
 
-function hgay_hubtel_order_id_from_invoice(string $invoiceId): ?int
+function hgay_hubtel_order_id_from_reference(string $reference): ?int
 {
-    if (preg_match('/^HGAY-(\d+)$/', trim($invoiceId), $m)) {
+    if (preg_match('/^HGAY-(\d+)$/', trim($reference), $m)) {
         return (int) $m[1];
     }
 
@@ -78,22 +99,62 @@ function hgay_hubtel_format_msisdn(string $phone): string
 }
 
 /**
+ * @param array<string, mixed>|null $payload
+ */
+function hgay_hubtel_response_code(?array $payload): string
+{
+    if ($payload === null) {
+        return '';
+    }
+
+    return (string) ($payload['responseCode'] ?? $payload['ResponseCode'] ?? '');
+}
+
+function hgay_hubtel_response_ok(?array $payload): bool
+{
+    $code = hgay_hubtel_response_code($payload);
+
+    return $code === '0000' || $code === '00';
+}
+
+/**
+ * @param array<string, mixed>|null $payload
+ * @return array<string, mixed>
+ */
+function hgay_hubtel_response_data(?array $payload): array
+{
+    if ($payload === null) {
+        return [];
+    }
+
+    $data = $payload['data'] ?? $payload['Data'] ?? [];
+
+    return is_array($data) ? $data : [];
+}
+
+/**
  * @param array<string, mixed> $body
  * @return array{ok: bool, http_code: int, body: array<string, mixed>|null, error: string}
  */
-function hgay_hubtel_api(string $method, string $path, array $body = []): array
+function hgay_hubtel_api(string $method, string $baseUrl, string $path, array $body = []): array
 {
     if (!hgay_hubtel_is_configured()) {
-        return ['ok' => false, 'http_code' => 0, 'body' => null, 'error' => 'Hubtel is not configured (config/hubtel.php).'];
+        return [
+            'ok' => false,
+            'http_code' => 0,
+            'body' => null,
+            'error' => 'Hubtel is not configured. Set client_id, client_secret, and merchant_account in config/hubtel.php.',
+        ];
     }
 
-    $url = HGAY_HUBTEL_API_BASE . $path;
+    $url = rtrim($baseUrl, '/') . $path;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Authorization: ' . hgay_hubtel_basic_auth_header(),
+        'Accept: application/json',
         'Content-Type: application/json',
         'Cache-Control: no-cache',
     ]);
@@ -115,76 +176,82 @@ function hgay_hubtel_api(string $method, string $path, array $body = []): array
 
     $decoded = json_decode($response, true);
     $payload = is_array($decoded) ? $decoded : null;
-    $responseCode = (string) ($payload['ResponseCode'] ?? '');
-    $ok = $httpCode >= 200 && $httpCode < 300 && $responseCode === '00';
+    $ok = $httpCode >= 200 && $httpCode < 300 && hgay_hubtel_response_ok($payload);
+
+    $error = '';
+    if (!$ok) {
+        if ($httpCode === 401) {
+            $error = 'Hubtel rejected the API credentials (401). Confirm Programmable API ID/Key and Collection Account Number.';
+        } elseif ($payload !== null) {
+            $message = (string) ($payload['message'] ?? $payload['Message'] ?? $payload['responseMessage'] ?? $payload['ResponseMessage'] ?? '');
+            $error = $message !== '' ? $message : 'Hubtel API error.';
+        } else {
+            $error = 'Hubtel API error (HTTP ' . $httpCode . ').';
+        }
+    }
 
     return [
         'ok' => $ok,
         'http_code' => $httpCode,
         'body' => $payload,
-        'error' => $ok ? '' : (string) ($payload['ResponseMessage'] ?? 'Hubtel API error.'),
+        'error' => $error,
     ];
 }
 
 /**
  * @param array<string, mixed> $order
- * @return array{ok: bool, checkout_url: string, invoice_id: string, error: string}
+ * @return array{ok: bool, checkout_url: string, client_reference: string, error: string}
  */
 function hgay_hubtel_initiate_checkout(array $order): array
 {
     $orderId = (int) ($order['id'] ?? $order['order_id'] ?? 0);
     $amountPesewas = (int) ($order['amount_pesewas'] ?? 0);
     if ($orderId < 1 || $amountPesewas < 1) {
-        return ['ok' => false, 'checkout_url' => '', 'invoice_id' => '', 'error' => 'Invalid order for Hubtel checkout.'];
+        return ['ok' => false, 'checkout_url' => '', 'client_reference' => '', 'error' => 'Invalid order for Hubtel checkout.'];
     }
 
-    $invoiceId = hgay_hubtel_invoice_id($orderId);
+    $creds = hgay_hubtel_credentials();
+    $clientReference = hgay_hubtel_client_reference($orderId);
     $amountGhs = round($amountPesewas / 100, 2);
     $name = trim((string) ($order['name'] ?? 'Customer'));
     $email = trim((string) ($order['email'] ?? ''));
     $phone = hgay_hubtel_format_msisdn((string) ($order['phone_full'] ?? ''));
     $quantity = (int) ($order['quantity'] ?? 1);
 
-    $callbackUrl = hgay_email_absolute_url('api/hubtel_callback');
-    $returnUrl = hgay_email_absolute_url('verify?order=' . $orderId);
-    $cancelUrl = rtrim(hgay_email_absolute_url(''), '/') . '/#place-order';
-
     $payload = [
-        'InvoiceId' => $invoiceId,
-        'TotalAmount' => $amountGhs,
-        'Description' => 'How Ghanaian Are You — ' . $quantity . ' game' . ($quantity > 1 ? 's' : ''),
-        'CustomerName' => $name,
-        'PrimaryCallbackUrl' => $callbackUrl,
-        'ReturnUrl' => $returnUrl,
-        'CancellationUrl' => $cancelUrl,
+        'totalAmount' => $amountGhs,
+        'description' => 'How Ghanaian Are You — ' . $quantity . ' game' . ($quantity > 1 ? 's' : ''),
+        'callbackUrl' => hgay_email_absolute_url('api/hubtel_callback'),
+        'returnUrl' => hgay_email_absolute_url('verify?order=' . $orderId),
+        'cancellationUrl' => rtrim(hgay_email_absolute_url(''), '/') . '/#place-order',
+        'merchantAccountNumber' => $creds['merchant_account'],
+        'clientReference' => $clientReference,
+        'payeeName' => $name,
     ];
     if ($email !== '') {
-        $payload['CustomerEmail'] = $email;
+        $payload['payeeEmail'] = $email;
     }
     if ($phone !== '') {
-        $payload['CustomerMsisdn'] = $phone;
+        $payload['payeeMobileNumber'] = $phone;
     }
 
-    $logo = hgay_email_absolute_url('HGAY_ASSETS/logo.png');
-    $payload['Logo'] = $logo;
-
-    $result = hgay_hubtel_api('POST', '/items/initiate', $payload);
+    $result = hgay_hubtel_api('POST', HGAY_HUBTEL_CHECKOUT_API, '/items/initiate', $payload);
     if (!$result['ok'] || !is_array($result['body'])) {
         return [
             'ok' => false,
             'checkout_url' => '',
-            'invoice_id' => $invoiceId,
+            'client_reference' => $clientReference,
             'error' => $result['error'] ?: 'Could not start Hubtel checkout.',
         ];
     }
 
-    $data = $result['body']['Data'] ?? [];
-    $checkoutUrl = trim((string) ($data['CheckoutUrl'] ?? ''));
+    $data = hgay_hubtel_response_data($result['body']);
+    $checkoutUrl = trim((string) ($data['checkoutUrl'] ?? $data['CheckoutUrl'] ?? ''));
     if ($checkoutUrl === '') {
         return [
             'ok' => false,
             'checkout_url' => '',
-            'invoice_id' => $invoiceId,
+            'client_reference' => $clientReference,
             'error' => 'Hubtel did not return a checkout URL.',
         ];
     }
@@ -192,7 +259,7 @@ function hgay_hubtel_initiate_checkout(array $order): array
     return [
         'ok' => true,
         'checkout_url' => $checkoutUrl,
-        'invoice_id' => $invoiceId,
+        'client_reference' => $clientReference,
         'error' => '',
     ];
 }
@@ -200,22 +267,53 @@ function hgay_hubtel_initiate_checkout(array $order): array
 /**
  * @return array{ok: bool, status: string, body: array<string, mixed>|null, error: string}
  */
-function hgay_hubtel_transaction_status(string $invoiceId): array
+function hgay_hubtel_transaction_status(string $clientReference): array
 {
-    $result = hgay_hubtel_api('POST', '/transaction/status', ['InvoiceId' => $invoiceId]);
+    $creds = hgay_hubtel_credentials();
+    $path = '/transactions/' . rawurlencode($creds['merchant_account'])
+        . '/status?clientReference=' . rawurlencode($clientReference);
+
+    $result = hgay_hubtel_api('GET', HGAY_HUBTEL_STATUS_API, $path);
     if (!is_array($result['body'])) {
         return ['ok' => false, 'status' => '', 'body' => null, 'error' => $result['error']];
     }
 
-    $data = $result['body']['Data'] ?? [];
-    $status = trim((string) ($data['Status'] ?? ''));
+    $data = hgay_hubtel_response_data($result['body']);
+    if ($data === [] && isset($result['body']['status'])) {
+        $data = $result['body'];
+    }
+
+    $status = trim((string) ($data['status'] ?? $data['Status'] ?? $result['body']['status'] ?? $result['body']['Status'] ?? ''));
 
     return [
-        'ok' => $result['ok'],
+        'ok' => $result['ok'] || $status !== '',
         'status' => $status,
-        'body' => is_array($data) ? $data : null,
+        'body' => $data !== [] ? $data : $result['body'],
         'error' => $result['error'],
     ];
+}
+
+/**
+ * @param array<string, mixed> $payload
+ */
+function hgay_hubtel_callback_is_success(array $payload): bool
+{
+    $data = hgay_hubtel_response_data($payload);
+    $status = strtolower(trim((string) (
+        $data['status']
+        ?? $data['Status']
+        ?? $payload['status']
+        ?? $payload['Status']
+        ?? ''
+    )));
+
+    if ($status === 'success' || $status === 'completed') {
+        return true;
+    }
+
+    $code = hgay_hubtel_response_code($payload);
+
+    return $code === '0000' && $status === '';
 }
 
 /**
@@ -226,22 +324,32 @@ function hgay_hubtel_handle_callback(PDO $pdo, array $payload): array
 {
     require_once __DIR__ . '/order-payment.php';
 
-    $invoiceId = trim((string) ($payload['InvoiceId'] ?? $payload['ClientReference'] ?? ''));
-    $orderId = hgay_hubtel_order_id_from_invoice($invoiceId);
-    if ($orderId === null && isset($payload['ClientReference'])) {
-        $orderId = hgay_hubtel_order_id_from_invoice((string) $payload['ClientReference']);
-    }
+    $data = hgay_hubtel_response_data($payload);
+    $clientReference = trim((string) (
+        $data['clientReference']
+        ?? $data['ClientReference']
+        ?? $payload['clientReference']
+        ?? $payload['ClientReference']
+        ?? ''
+    ));
+
+    $orderId = hgay_hubtel_order_id_from_reference($clientReference);
     if ($orderId === null) {
-        return ['ok' => false, 'order_id' => 0, 'updated' => false, 'error' => 'Unknown invoice reference.'];
+        return ['ok' => false, 'order_id' => 0, 'updated' => false, 'error' => 'Unknown client reference.'];
     }
 
-    $status = strtolower(trim((string) ($payload['Status'] ?? '')));
-    if ($status !== 'completed' && $status !== 'success') {
+    if (!hgay_hubtel_callback_is_success($payload)) {
         return ['ok' => true, 'order_id' => $orderId, 'updated' => false, 'error' => ''];
     }
 
-    $transactionId = trim((string) ($payload['TransactionId'] ?? $invoiceId));
-    $amountGhs = isset($payload['Amount']) ? (float) $payload['Amount'] : null;
+    $transactionId = trim((string) (
+        $data['checkoutId']
+        ?? $data['CheckoutId']
+        ?? $data['hubtelTransactionId']
+        ?? $data['HubtelTransactionId']
+        ?? $clientReference
+    ));
+    $amountGhs = isset($data['amount']) ? (float) $data['amount'] : (isset($data['Amount']) ? (float) $data['Amount'] : null);
     $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
 
     return [

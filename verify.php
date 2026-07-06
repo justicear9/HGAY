@@ -37,14 +37,19 @@ try {
 
       $invoiceId = trim((string) ($order['paystack_reference'] ?? ''));
       if ($invoiceId === '') {
-        $invoiceId = hgay_hubtel_invoice_id($orderId);
+        $invoiceId = hgay_hubtel_client_reference($orderId);
       }
 
       $statusResult = hgay_hubtel_transaction_status($invoiceId);
       $status = strtolower($statusResult['status']);
       if ($status === 'completed' || $status === 'success') {
-        $transactionId = trim((string) ($statusResult['body']['TransactionId'] ?? $invoiceId));
-        $amountGhs = isset($statusResult['body']['Amount']) ? (float) $statusResult['body']['Amount'] : null;
+        $transactionId = trim((string) (
+          $statusResult['body']['checkoutId']
+          ?? $statusResult['body']['CheckoutId']
+          ?? $statusResult['body']['hubtelTransactionId']
+          ?? $invoiceId
+        ));
+        $amountGhs = isset($statusResult['body']['amount']) ? (float) $statusResult['body']['amount'] : (isset($statusResult['body']['Amount']) ? (float) $statusResult['body']['Amount'] : null);
         $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
         if ($mark['updated'] || ($order['status'] ?? '') === 'paid') {
           $verified = true;

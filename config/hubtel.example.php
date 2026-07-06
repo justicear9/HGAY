@@ -2,12 +2,14 @@
 /**
  * Copy to config/hubtel.php on the server (not in Git).
  *
- * Get credentials from Hubtel merchant dashboard → API accounts → HTTP Rest API.
- * https://unity.hubtel.com/merchantaccount/dashboard
+ * Programmable API Keys + Collection Account Number:
+ * https://developers.hubtel.com/docs/business/getting_started/programmable_keys
  */
 return [
-    'client_id' => 'your_client_id',
-    'client_secret' => 'your_client_secret',
-    /** Optional: merchant account number shown in Hubtel dashboard */
-    'merchant_account' => '',
+    /** Programmable API ID */
+    'client_id' => 'your_api_id',
+    /** Programmable API Key */
+    'client_secret' => 'your_api_key',
+    /** Collection Account Number (mandatory for Online Checkout) */
+    'merchant_account' => 'your_collection_account_number',
 ];

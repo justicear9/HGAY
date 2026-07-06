@@ -164,7 +164,7 @@ try {
     }
 
     $stmt = $pdo->prepare('UPDATE orders SET paystack_reference = :ref, updated_at = NOW() WHERE id = :id');
-    $stmt->execute([':ref' => $checkout['invoice_id'], ':id' => $orderId]);
+    $stmt->execute([':ref' => $checkout['client_reference'], ':id' => $orderId]);
 
     echo json_encode([
       'success' => true,
