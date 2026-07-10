@@ -25,6 +25,18 @@ if (!is_array($payload)) {
     exit;
 }
 
+$logDir = dirname(__DIR__) . '/logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0700, true);
+}
+if (is_dir($logDir) && is_string($raw) && $raw !== '') {
+    @file_put_contents(
+        $logDir . '/hubtel-callbacks.log',
+        gmdate('c') . ' ' . $raw . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
 try {
     $pdo = dbConnection();
     $result = hgay_hubtel_handle_callback($pdo, $payload);
