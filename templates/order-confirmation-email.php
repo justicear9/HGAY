@@ -3,10 +3,13 @@
  * Order confirmation HTML email — kente frame + site palette.
  * Uses opaque <img> kente tiles (Gmail blocks CSS background-image).
  *
- * Frame (3×3 — corners are solid tiles so joins never leave voids):
- *   [C][======== H ========][C]
- *   [V][      content      ][V]
- *   [C][======== H ========][C]
+ * Frame:
+ *   [======== full-width top bar ========]
+ *   [side][         content        ][side]
+ *   [======== full-width bot bar ========]
+ *
+ * Top/bottom bars span the full 560px so the corner cells are solid kente.
+ * Side strips sit flush under/above those bars (fixed height covers the body).
  *
  * @var array $order name, email, quantity, amount_pesewas, currency,
  *              paystack_reference, payment_mode, order_id
@@ -22,11 +25,10 @@ $ref = isset($order['paystack_reference']) ? htmlspecialchars($order['paystack_r
 $payOnDelivery = ($order['payment_mode'] ?? '') === 'pay_on_delivery';
 $orderId = isset($order['order_id']) ? (int) $order['order_id'] : 0;
 
-// Cache-bust so mail clients pick up frame asset updates
-$kenteQ = '?v=20260714';
+// Cache-bust so mail clients pick up asset updates after deploy
+$kenteQ = '?v=20260714b';
 $kenteHorizontal = hgay_email_absolute_url('HGAY_ASSETS/Card_Pictures_and_Video/kentepatternpng_horizontal.png') . $kenteQ;
 $kenteVertical = hgay_email_absolute_url('HGAY_ASSETS/Card_Pictures_and_Video/kentepatternpng.png') . $kenteQ;
-$kenteCorner = hgay_email_absolute_url('HGAY_ASSETS/Card_Pictures_and_Video/kentepattern_email_corner.png') . $kenteQ;
 $logoUrl = hgay_email_absolute_url('HGAY_ASSETS/logo.png');
 $siteUrl = hgay_email_absolute_url('');
 
@@ -49,12 +51,6 @@ $border = 'rgba(255,255,255,0.08)';
 
 $kh = htmlspecialchars($kenteHorizontal);
 $kv = htmlspecialchars($kenteVertical);
-$kc = htmlspecialchars($kenteCorner);
-
-$cornerImg = '<img src="' . $kc . '" width="' . $sideW . '" height="' . $barH . '" alt="" style="display:block;width:' . $sideW . 'px;height:' . $barH . 'px;border:0;">';
-$barImg = '<img src="' . $kh . '" width="' . $innerW . '" height="' . $barH . '" alt="" style="display:block;width:' . $innerW . 'px;height:' . $barH . 'px;border:0;">';
-$sideImg = '<img src="' . $kv . '" width="' . $sideW . '" height="' . $sideH . '" alt="" style="display:block;width:' . $sideW . 'px;height:' . $sideH . 'px;border:0;">';
-
 $cell0 = 'padding:0;margin:0;font-size:0;line-height:0;border:0;';
 ?>
 <!DOCTYPE html>
@@ -86,22 +82,16 @@ $cell0 = 'padding:0;margin:0;font-size:0;line-height:0;border:0;';
 
         <table role="presentation" width="<?php echo $frameW; ?>" cellspacing="0" cellpadding="0" border="0" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $frameW; ?>px; max-width:<?php echo $frameW; ?>px; border-collapse:collapse; border-spacing:0; mso-table-lspace:0pt; mso-table-rspace:0pt;">
 
-          <!-- Top: corner | bar | corner -->
+          <!-- Full-width top kente (fills the corner columns too) -->
           <tr>
-            <td width="<?php echo $sideW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $cornerImg; ?>
-            </td>
-            <td width="<?php echo $innerW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $innerW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $barImg; ?>
-            </td>
-            <td width="<?php echo $sideW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $cornerImg; ?>
+            <td colspan="3" width="<?php echo $frameW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $frameW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
+              <img src="<?php echo $kh; ?>" width="<?php echo $frameW; ?>" height="<?php echo $barH; ?>" alt="" style="display:block; width:<?php echo $frameW; ?>px; height:<?php echo $barH; ?>px; border:0;">
             </td>
           </tr>
 
           <tr>
             <td width="<?php echo $sideW; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; <?php echo $cell0; ?>">
-              <?php echo $sideImg; ?>
+              <img src="<?php echo $kv; ?>" width="<?php echo $sideW; ?>" height="<?php echo $sideH; ?>" alt="" style="display:block; width:<?php echo $sideW; ?>px; height:<?php echo $sideH; ?>px; border:0;">
             </td>
 
             <td width="<?php echo $innerW; ?>" valign="top" bgcolor="<?php echo $card; ?>" style="width:<?php echo $innerW; ?>px; background:<?php echo $card; ?> !important; padding:0; vertical-align:top;">
@@ -186,20 +176,14 @@ $cell0 = 'padding:0;margin:0;font-size:0;line-height:0;border:0;';
             </td>
 
             <td width="<?php echo $sideW; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; <?php echo $cell0; ?>">
-              <?php echo $sideImg; ?>
+              <img src="<?php echo $kv; ?>" width="<?php echo $sideW; ?>" height="<?php echo $sideH; ?>" alt="" style="display:block; width:<?php echo $sideW; ?>px; height:<?php echo $sideH; ?>px; border:0;">
             </td>
           </tr>
 
-          <!-- Bottom: corner | bar | corner -->
+          <!-- Full-width bottom kente -->
           <tr>
-            <td width="<?php echo $sideW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $cornerImg; ?>
-            </td>
-            <td width="<?php echo $innerW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $innerW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $barImg; ?>
-            </td>
-            <td width="<?php echo $sideW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $sideW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
-              <?php echo $cornerImg; ?>
+            <td colspan="3" width="<?php echo $frameW; ?>" height="<?php echo $barH; ?>" valign="top" bgcolor="<?php echo $bg; ?>" style="width:<?php echo $frameW; ?>px; height:<?php echo $barH; ?>px; <?php echo $cell0; ?>">
+              <img src="<?php echo $kh; ?>" width="<?php echo $frameW; ?>" height="<?php echo $barH; ?>" alt="" style="display:block; width:<?php echo $frameW; ?>px; height:<?php echo $barH; ?>px; border:0;">
             </td>
           </tr>
 
