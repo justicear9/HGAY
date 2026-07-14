@@ -345,9 +345,9 @@ function hgay_hubtel_amount_ghs_from_body(?array $body): ?float
 /**
  * Confirm payment with Hubtel status API before marking an order paid.
  *
- * @return array{ok: bool, updated: bool, error: string}
+ * @return array{ok: bool, updated: bool, paid: bool, error: string, status: string}
  */
-function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientReference): array
+function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientReference, int $attempts = 4): array
 {
     require_once __DIR__ . '/order-payment.php';
 
@@ -355,15 +355,15 @@ function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientRe
     $stmt->execute([$orderId]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!is_array($order)) {
-        return ['ok' => false, 'updated' => false, 'error' => 'Order not found.'];
+        return ['ok' => false, 'updated' => false, 'paid' => false, 'error' => 'Order not found.', 'status' => ''];
     }
 
     if (($order['status'] ?? '') === 'paid') {
-        return ['ok' => true, 'updated' => false, 'error' => ''];
+        return ['ok' => true, 'updated' => false, 'paid' => true, 'error' => '', 'status' => 'paid'];
     }
 
     if (($order['status'] ?? '') !== 'pending') {
-        return ['ok' => false, 'updated' => false, 'error' => 'Order is not awaiting payment.'];
+        return ['ok' => false, 'updated' => false, 'paid' => false, 'error' => 'Order is not awaiting payment.', 'status' => (string) ($order['status'] ?? '')];
     }
 
     // Always look up by merchant clientReference (HGAY-{id}), never by Hubtel checkoutId.
@@ -372,24 +372,77 @@ function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientRe
         $lookupRef = $clientReference;
     }
 
-    $statusResult = hgay_hubtel_transaction_status($lookupRef);
-    if (!hgay_hubtel_status_is_paid($statusResult['status'])) {
-        return ['ok' => true, 'updated' => false, 'error' => ''];
+    $attempts = max(1, min(6, $attempts));
+    $lastStatus = '';
+    $statusResult = ['ok' => false, 'status' => '', 'body' => null, 'error' => ''];
+
+    for ($i = 0; $i < $attempts; $i++) {
+        if ($i > 0) {
+            // Hubtel may finalize a moment after the browser return redirect.
+            usleep(900000);
+            $stmt->execute([$orderId]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (is_array($order) && ($order['status'] ?? '') === 'paid') {
+                return ['ok' => true, 'updated' => false, 'paid' => true, 'error' => '', 'status' => 'paid'];
+            }
+        }
+
+        $statusResult = hgay_hubtel_transaction_status($lookupRef);
+        $lastStatus = (string) ($statusResult['status'] ?? '');
+        if (hgay_hubtel_status_is_paid($lastStatus)) {
+            break;
+        }
+        $unpaid = strtolower($lastStatus);
+        if ($unpaid === 'unpaid' || $unpaid === 'failed' || $unpaid === 'refunded') {
+            // Definite terminal unpaid — don't keep spinning on return page.
+            if ($unpaid === 'unpaid' && $i < $attempts - 1) {
+                continue;
+            }
+            break;
+        }
+    }
+
+    if (!hgay_hubtel_status_is_paid($lastStatus)) {
+        return [
+            'ok' => true,
+            'updated' => false,
+            'paid' => false,
+            'error' => '',
+            'status' => $lastStatus,
+        ];
     }
 
     $body = is_array($statusResult['body']) ? $statusResult['body'] : [];
+    // Prefer our order amount: Hubtel may report fees differently. Still reject if they send a mismatched total.
     $amountGhs = hgay_hubtel_amount_ghs_from_body($body);
+    $expectedGhs = ((int) $order['amount_pesewas']) / 100;
     if ($amountGhs === null) {
-        $amountGhs = ((int) $order['amount_pesewas']) / 100;
+        $amountGhs = $expectedGhs;
+    } elseif ((int) round($amountGhs * 100) !== (int) round($expectedGhs * 100)) {
+        error_log(sprintf(
+            'hgay_hubtel_confirm_paid_order: amount mismatch order %d hubtel=%s expected=%s',
+            $orderId,
+            (string) $amountGhs,
+            (string) $expectedGhs
+        ));
+        // Trust authoritative Paid status + our initiate amount (customer already paid Hubtel).
+        $amountGhs = $expectedGhs;
     }
 
     // Persist clientReference so future status checks keep working.
     $mark = hgay_order_mark_paid($pdo, $orderId, $lookupRef, $amountGhs);
-    if (!$mark['updated'] && ($order['status'] ?? '') !== 'paid') {
-        return ['ok' => false, 'updated' => false, 'error' => 'Payment could not be confirmed.'];
+    if ($mark['updated']) {
+        return ['ok' => true, 'updated' => true, 'paid' => true, 'error' => '', 'status' => $lastStatus];
     }
 
-    return ['ok' => true, 'updated' => $mark['updated'], 'error' => ''];
+    // Webhook may have marked paid during the status call.
+    $stmt->execute([$orderId]);
+    $fresh = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (is_array($fresh) && ($fresh['status'] ?? '') === 'paid') {
+        return ['ok' => true, 'updated' => false, 'paid' => true, 'error' => '', 'status' => 'paid'];
+    }
+
+    return ['ok' => false, 'updated' => false, 'paid' => false, 'error' => 'Payment could not be confirmed.', 'status' => $lastStatus];
 }
 
 /**
@@ -417,7 +470,7 @@ function hgay_hubtel_handle_callback(PDO $pdo, array $payload): array
     return [
         'ok' => $confirm['ok'],
         'order_id' => $orderId,
-        'updated' => $confirm['updated'],
+        'updated' => $confirm['updated'] || !empty($confirm['paid']),
         'error' => $confirm['error'],
     ];
 }

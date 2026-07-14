@@ -66,7 +66,7 @@ try {
         }
 
         $confirm = hgay_hubtel_confirm_paid_order($pdo, $orderId, $invoiceId);
-        if ($confirm['updated']) {
+        if (!empty($confirm['paid'])) {
           $verified = true;
           $stmt = $pdo->prepare('SELECT paystack_reference, amount_pesewas, currency FROM orders WHERE id = ?');
           $stmt->execute([$orderId]);
@@ -78,7 +78,7 @@ try {
             $error = '';
           }
         } elseif ($confirm['ok']) {
-          $error = 'Payment is still processing. If you completed payment, we will confirm shortly by email.';
+          $error = 'Payment is still processing. If you completed payment, refresh this page in a few seconds or wait for your confirmation email.';
         } else {
           $error = 'Payment was not completed. You can try placing your order again.';
         }
@@ -143,6 +143,9 @@ try {
   <link rel="apple-touch-icon" href="HGAY_ASSETS/Card_Pictures_and_Video/howghrupng.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title><?php echo $verified ? 'Payment successful' : 'Payment verification'; ?> — How Ghanaian Are You?</title>
+  <?php if (!$verified && $orderId > 0): ?>
+  <meta http-equiv="refresh" content="5">
+  <?php endif; ?>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -172,7 +175,12 @@ try {
       <?php else: ?>
         <h1 class="section-title"><?php echo $orderId > 0 ? 'Checking payment' : 'Verification failed'; ?></h1>
         <p><?php echo htmlspecialchars($error); ?></p>
+        <?php if ($orderId > 0): ?>
+        <p><small>This page will refresh automatically.</small></p>
+        <a href="<?php echo htmlspecialchars((string) ($_SERVER['REQUEST_URI'] ?? ('verify?order=' . $orderId))); ?>" class="btn btn-primary">Refresh now</a>
+        <?php else: ?>
         <a href="<?php echo htmlspecialchars(site_url('#place-order')); ?>" class="btn btn-primary">Try again</a>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
   </main>
