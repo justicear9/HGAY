@@ -58,9 +58,11 @@ try {
       } else {
         require_once __DIR__ . '/lib/hubtel.php';
 
-        $invoiceId = trim((string) ($order['paystack_reference'] ?? ''));
-        if ($invoiceId === '') {
-          $invoiceId = hgay_hubtel_client_reference($orderId);
+        // Status API requires clientReference (HGAY-{id}), not Hubtel checkoutId.
+        $invoiceId = hgay_hubtel_client_reference($orderId);
+        $storedRef = trim((string) ($order['paystack_reference'] ?? ''));
+        if ($storedRef !== '' && hgay_hubtel_order_id_from_reference($storedRef) === $orderId) {
+          $invoiceId = $storedRef;
         }
 
         $confirm = hgay_hubtel_confirm_paid_order($pdo, $orderId, $invoiceId);

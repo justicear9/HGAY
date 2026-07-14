@@ -313,7 +313,8 @@ function hgay_hubtel_status_is_paid(string $status): bool
 {
     $status = strtolower(trim($status));
 
-    return $status === 'success' || $status === 'completed';
+    // Callback uses Success/Completed; Transaction Status Check uses Paid.
+    return $status === 'success' || $status === 'completed' || $status === 'paid';
 }
 
 /**
@@ -365,26 +366,25 @@ function hgay_hubtel_confirm_paid_order(PDO $pdo, int $orderId, string $clientRe
         return ['ok' => false, 'updated' => false, 'error' => 'Order is not awaiting payment.'];
     }
 
-    $statusResult = hgay_hubtel_transaction_status($clientReference);
+    // Always look up by merchant clientReference (HGAY-{id}), never by Hubtel checkoutId.
+    $lookupRef = hgay_hubtel_client_reference($orderId);
+    if ($clientReference !== '' && hgay_hubtel_order_id_from_reference($clientReference) === $orderId) {
+        $lookupRef = $clientReference;
+    }
+
+    $statusResult = hgay_hubtel_transaction_status($lookupRef);
     if (!hgay_hubtel_status_is_paid($statusResult['status'])) {
         return ['ok' => true, 'updated' => false, 'error' => ''];
     }
 
     $body = is_array($statusResult['body']) ? $statusResult['body'] : [];
-    $transactionId = trim((string) (
-        $body['checkoutId']
-        ?? $body['CheckoutId']
-        ?? $body['hubtelTransactionId']
-        ?? $body['HubtelTransactionId']
-        ?? $clientReference
-    ));
-
     $amountGhs = hgay_hubtel_amount_ghs_from_body($body);
     if ($amountGhs === null) {
         $amountGhs = ((int) $order['amount_pesewas']) / 100;
     }
 
-    $mark = hgay_order_mark_paid($pdo, $orderId, $transactionId, $amountGhs);
+    // Persist clientReference so future status checks keep working.
+    $mark = hgay_order_mark_paid($pdo, $orderId, $lookupRef, $amountGhs);
     if (!$mark['updated'] && ($order['status'] ?? '') !== 'paid') {
         return ['ok' => false, 'updated' => false, 'error' => 'Payment could not be confirmed.'];
     }

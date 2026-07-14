@@ -5,6 +5,7 @@
  *   php scripts/hubtel_dump_samples.php
  *
  * Outputs callback log lines + live Transaction Status API responses.
+ * Status checks use clientReference HGAY-{orderId} (not Hubtel checkoutId).
  */
 declare(strict_types=1);
 
@@ -15,7 +16,7 @@ require_once $root . '/lib/hubtel.php';
 $pdo = dbConnection();
 $orders = $pdo->query(
     "SELECT id, paystack_reference, amount_pesewas, status
-     FROM orders WHERE status = 'paid' AND paystack_reference != ''
+     FROM orders WHERE status = 'paid'
      ORDER BY id DESC LIMIT 5"
 )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -31,11 +32,17 @@ $out = [
 ];
 
 foreach ($orders as $order) {
-    $ref = (string) $order['paystack_reference'];
-    $result = hgay_hubtel_transaction_status($ref);
+    $orderId = (int) $order['id'];
+    $storedRef = (string) ($order['paystack_reference'] ?? '');
+    $clientReference = hgay_hubtel_client_reference($orderId);
+    $result = hgay_hubtel_transaction_status($clientReference);
     $out['status_checks'][] = [
-        'order_id' => (int) $order['id'],
-        'client_reference' => $ref,
+        'order_id' => $orderId,
+        'client_reference' => $clientReference,
+        'stored_paystack_reference' => $storedRef,
+        'request_url' => 'https://api-txnstatus.hubtel.com/transactions/'
+            . rawurlencode(hgay_hubtel_credentials()['merchant_account'])
+            . '/status?clientReference=' . rawurlencode($clientReference),
         'http_ok' => $result['ok'],
         'status' => $result['status'],
         'raw_response' => $result['body'],

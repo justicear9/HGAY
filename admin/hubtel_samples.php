@@ -13,7 +13,7 @@ $pdo = dbConnection();
 $paidOrders = $pdo->query(
     "SELECT id, paystack_reference, amount_pesewas, currency, status, created_at
      FROM orders
-     WHERE status = 'paid' AND paystack_reference IS NOT NULL AND paystack_reference != ''
+     WHERE status = 'paid'
      ORDER BY id DESC
      LIMIT 10"
 )->fetchAll(PDO::FETCH_ASSOC);
@@ -27,13 +27,14 @@ if (is_file($logFile)) {
 
 $statusSamples = [];
 foreach ($paidOrders as $order) {
-    $ref = trim((string) ($order['paystack_reference'] ?? ''));
-    if ($ref === '') {
-        continue;
-    }
+    $orderId = (int) $order['id'];
+    $storedRef = trim((string) ($order['paystack_reference'] ?? ''));
+    // Hubtel status API expects merchant clientReference (HGAY-{id}), not checkoutId.
+    $ref = hgay_hubtel_client_reference($orderId);
     $statusSamples[] = [
-        'order_id' => (int) $order['id'],
+        'order_id' => $orderId,
         'client_reference' => $ref,
+        'stored_paystack_reference' => $storedRef,
         'request_url' => 'https://api-txnstatus.hubtel.com/transactions/'
             . rawurlencode(hgay_hubtel_credentials()['merchant_account'])
             . '/status?clientReference=' . rawurlencode($ref),
