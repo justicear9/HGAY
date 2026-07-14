@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS orders (
   delivery_address TEXT NOT NULL,
   delivery_postcode VARCHAR(32) DEFAULT NULL,
   paystack_reference VARCHAR(64) DEFAULT NULL,
+  confirmation_email_sent_at DATETIME DEFAULT NULL,
   status ENUM('pending', 'paid', 'failed', 'confirmed') NOT NULL DEFAULT 'pending',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

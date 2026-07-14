@@ -1,6 +1,8 @@
 <?php
 require_once 'auth.php';
+require_once dirname(__DIR__) . '/lib/security.php';
 require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/lib/order-payment.php';
 
 $statusFilter = isset($_GET['status']) && in_array($_GET['status'], ['pending', 'paid', 'failed', 'confirmed'], true)
   ? $_GET['status'] : '';
@@ -13,9 +15,37 @@ $statusLabels = [
 ];
 
 $pdo = dbConnection();
-$sql = "SELECT id, name, email, phone_full, quantity, amount_pesewas, currency,
+$message = '';
+$error = '';
+$hasEmailCol = hgay_orders_has_email_sent_column($pdo);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $csrf = (string) ($_POST['csrf_token'] ?? '');
+  if (!hgay_csrf_verify($csrf)) {
+    $error = 'Session expired. Refresh the page and try again.';
+  } elseif (isset($_POST['resend_email'])) {
+    $resendId = (int) ($_POST['order_id'] ?? 0);
+    if ($resendId < 1) {
+      $error = 'Invalid order.';
+    } else {
+      $result = hgay_order_ensure_confirmation_email($pdo, $resendId, true);
+      if ($result['ok']) {
+        $message = 'Confirmation email resent for order #' . $resendId . '.';
+      } else {
+        $error = $result['error'] !== '' ? $result['error'] : 'Could not send email.';
+      }
+    }
+  }
+}
+
+$cols = 'id, name, email, phone_full, quantity, amount_pesewas, currency,
          delivery_country, delivery_region, delivery_address, delivery_postcode,
-         paystack_reference, status, created_at FROM orders";
+         paystack_reference, status, created_at';
+if ($hasEmailCol) {
+  $cols .= ', confirmation_email_sent_at';
+}
+
+$sql = "SELECT {$cols} FROM orders";
 $params = [];
 if ($statusFilter !== '') {
   $sql .= ' WHERE status = :status';
@@ -36,6 +66,14 @@ require_once 'includes/layout_start.php';
         <h1>Orders</h1>
         <p><?php echo count($orders); ?> order(s)</p>
       </header>
+
+      <?php if ($message): ?><div class="admin-alert success"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
+      <?php if ($error): ?><div class="admin-alert error"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
+      <?php if (!$hasEmailCol): ?>
+      <div class="admin-alert error">
+        Run the latest <code>schema-update.sql</code> on the database to add <code>confirmation_email_sent_at</code> (email tracking + safer resends).
+      </div>
+      <?php endif; ?>
 
       <form method="get" class="admin-filters">
         <label for="filter-status">Status</label>
@@ -61,6 +99,7 @@ require_once 'includes/layout_start.php';
                 <th>Delivery</th>
                 <th>Status</th>
                 <th>Reference</th>
+                <th>Email</th>
               </tr>
             </thead>
             <tbody>
@@ -93,10 +132,26 @@ require_once 'includes/layout_start.php';
                     echo '—';
                   }
                 ?></td>
+                <td style="font-size:0.8rem;white-space:nowrap">
+                  <?php if (in_array($o['status'], ['paid', 'confirmed'], true)): ?>
+                    <?php if ($hasEmailCol && !empty($o['confirmation_email_sent_at'])): ?>
+                      Sent <?php echo htmlspecialchars(date('Y-m-d H:i', strtotime((string) $o['confirmation_email_sent_at']))); ?><br>
+                    <?php else: ?>
+                      <span style="color:#f59e0b">Not sent</span><br>
+                    <?php endif; ?>
+                    <form method="post" style="display:inline;margin:0">
+                      <?php echo hgay_csrf_field(); ?>
+                      <input type="hidden" name="order_id" value="<?php echo (int) $o['id']; ?>">
+                      <button type="submit" name="resend_email" value="1" class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem">Resend</button>
+                    </form>
+                  <?php else: ?>
+                    —
+                  <?php endif; ?>
+                </td>
               </tr>
               <?php endforeach; ?>
               <?php if (empty($orders)): ?>
-              <tr><td colspan="8">No orders found.</td></tr>
+              <tr><td colspan="9">No orders found.</td></tr>
               <?php endif; ?>
             </tbody>
           </table>

@@ -49,6 +49,8 @@ try {
 
       if (($order['status'] ?? '') === 'paid') {
         $verified = true;
+        require_once __DIR__ . '/lib/order-payment.php';
+        hgay_order_ensure_confirmation_email($pdo, $orderId);
         if ($hasToken) {
           $displayReference = (string) ($order['paystack_reference'] ?? '');
           $amountFormatted = number_format(((int) $order['amount_pesewas']) / 100, 2) . ' ' . ($order['currency'] ?? 'GHS');
@@ -68,6 +70,8 @@ try {
         $confirm = hgay_hubtel_confirm_paid_order($pdo, $orderId, $invoiceId);
         if (!empty($confirm['paid'])) {
           $verified = true;
+          require_once __DIR__ . '/lib/order-payment.php';
+          hgay_order_ensure_confirmation_email($pdo, $orderId);
           $stmt = $pdo->prepare('SELECT paystack_reference, amount_pesewas, currency FROM orders WHERE id = ?');
           $stmt->execute([$orderId]);
           $fresh = $stmt->fetch(PDO::FETCH_ASSOC);

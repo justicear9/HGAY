@@ -129,17 +129,8 @@ try {
   $accessToken = hgay_order_access_token($orderId, $raw['email']);
 
   if ($paymentMode === 'pay_on_delivery') {
-    require_once __DIR__ . '/lib/order-mail.php';
-    $mailResult = hgay_send_order_confirmation_email([
-      'name' => $raw['name'],
-      'email' => $raw['email'],
-      'quantity' => $raw['quantity'],
-      'amount_pesewas' => $amountPesewas,
-      'currency' => 'GHS',
-      'paystack_reference' => '',
-      'payment_mode' => 'pay_on_delivery',
-      'order_id' => $orderId,
-    ]);
+    require_once __DIR__ . '/lib/order-payment.php';
+    $mailResult = hgay_order_ensure_confirmation_email($pdo, $orderId);
 
     $redirect = site_url('order-confirmed?order=' . $orderId . '&token=' . rawurlencode($accessToken));
     if (!$mailResult['ok']) {
@@ -150,7 +141,7 @@ try {
       'success' => true,
       'order_id' => $orderId,
       'payment_mode' => 'pay_on_delivery',
-      'email_sent' => $mailResult['ok'],
+      'email_sent' => $mailResult['sent'] || $mailResult['ok'],
       'redirect' => $redirect,
     ]);
     exit;

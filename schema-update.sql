@@ -66,3 +66,7 @@ ALTER TABLE orders
 
 -- Optional: set app_secret in config/site.php for order access tokens (see config/site.example.php).
 
+-- Track whether the customer confirmation email was sent (run once on live DB)
+ALTER TABLE orders
+  ADD COLUMN confirmation_email_sent_at DATETIME NULL DEFAULT NULL AFTER paystack_reference;
+
