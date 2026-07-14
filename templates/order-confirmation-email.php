@@ -22,6 +22,10 @@ $kenteVertical = hgay_email_absolute_url('HGAY_ASSETS/Card_Pictures_and_Video/ke
 $logoUrl = hgay_email_absolute_url('HGAY_ASSETS/logo.png');
 $siteUrl = hgay_email_absolute_url('');
 
+// Stack short tiles so side kente always meets the bottom strip (content height varies).
+$kenteSideTileH = 64;
+$kenteSideTiles = 18; // ~1152px — covers confirmation email + padding
+
 $bg = '#0a0a0b';
 $card = '#18181b';
 $text = '#fafafa';
@@ -31,6 +35,26 @@ $gold = '#FCD116';
 $red = '#E30613';
 $green = '#006B3F';
 $border = 'rgba(255,255,255,0.08)';
+
+/** @return string HTML for left/right kente column that fills variable-height rows */
+if (!function_exists('hgay_email_kente_side')) {
+    function hgay_email_kente_side(string $src, int $tileH, int $tiles, string $bg): string
+    {
+        $srcEsc = htmlspecialchars($src);
+        $bgEsc = htmlspecialchars($bg);
+        $out = '';
+        $out .= '<td width="18" valign="top" background="' . $srcEsc . '" bgcolor="' . $bgEsc . '"';
+        $out .= ' style="width:18px; max-width:18px; padding:0; margin:0; font-size:0; line-height:0;';
+        $out .= ' background-image:url(\'' . $srcEsc . '\'); background-repeat:repeat-y; background-position:top center; background-color:' . $bgEsc . ';">';
+        for ($i = 0; $i < $tiles; $i++) {
+            $out .= '<img src="' . $srcEsc . '" width="18" height="' . $tileH . '" alt=""';
+            $out .= ' style="display:block; width:18px; min-width:18px; height:' . $tileH . 'px; border:0; margin:0; padding:0;">';
+        }
+        $out .= '</td>';
+
+        return $out;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,11 +74,11 @@ $border = 'rgba(255,255,255,0.08)';
     Your How Ghanaian Are You? order is confirmed<?php echo $payOnDelivery ? ' — pay on delivery.' : '.'; ?>
   </div>
 
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:<?php echo $bg; ?>;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:<?php echo $bg; ?>; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
     <tr>
       <td align="center" style="padding:24px 12px;">
 
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px; border-collapse:collapse;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
 
           <!-- Top kente strip (img — works in Gmail) -->
           <tr>
@@ -64,15 +88,12 @@ $border = 'rgba(255,255,255,0.08)';
           </tr>
 
           <tr>
-            <!-- Left kente strip -->
-            <td width="18" valign="top" style="padding:0; font-size:0; line-height:0; background:<?php echo $bg; ?>;">
-              <img src="<?php echo htmlspecialchars($kenteVertical); ?>" width="18" height="520" alt="" style="display:block; width:18px; min-width:18px; height:520px; border:0;">
-            </td>
+            <?php echo hgay_email_kente_side($kenteVertical, $kenteSideTileH, $kenteSideTiles, $bg); ?>
 
             <!-- Main card -->
-            <td style="background:<?php echo $card; ?>; padding:0;">
+            <td valign="top" style="background:<?php echo $card; ?>; padding:0; vertical-align:top;">
 
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
                 <tr>
                   <td style="padding:28px 28px 20px; text-align:center;">
                     <a href="<?php echo htmlspecialchars($siteUrl); ?>" style="text-decoration:none;">
@@ -170,13 +191,10 @@ $border = 'rgba(255,255,255,0.08)';
 
             </td>
 
-            <!-- Right kente strip -->
-            <td width="18" valign="top" style="padding:0; font-size:0; line-height:0; background:<?php echo $bg; ?>;">
-              <img src="<?php echo htmlspecialchars($kenteVertical); ?>" width="18" height="520" alt="" style="display:block; width:18px; min-width:18px; height:520px; border:0;">
-            </td>
+            <?php echo hgay_email_kente_side($kenteVertical, $kenteSideTileH, $kenteSideTiles, $bg); ?>
           </tr>
 
-          <!-- Bottom kente strip -->
+          <!-- Bottom kente strip — flush against sides (no gap) -->
           <tr>
             <td colspan="3" style="padding:0; font-size:0; line-height:0;">
               <img src="<?php echo htmlspecialchars($kenteHorizontal); ?>" width="560" height="32" alt="" style="display:block; width:100%; max-width:560px; height:32px; border:0;">
